@@ -7,7 +7,7 @@
   "shardingCaveat": "Rekor is SHARDED. A REST entry's top-level logIndex is GLOBAL across every shard the log has ever had; verification.inclusionProof.logIndex is LOCAL to the active shard's Merkle tree. On the 2021 capture (logIndex 1000000) the two happen to be equal because that entry predates the shard splits, and an equality check written against that capture alone looked correct. rekor_rest_entry_fresh.json (global 2354787700, shard-local 2232883438) disproves it. The invariant that IS true, and that the kit now enforces when rekor.restLogInfo is supplied, is global - local == sum(inactiveShards[].treeSize) \u2014 121904262 for this capture, exactly."
  },
  "description": "Every output shape this kit is allowed to parse, and the evidence that we have actually seen it. A parser may only succeed on a VALIDATED shape; shapes.ShapeRegistry re-hashes each captureFile at load time and demotes any entry whose capture is missing or altered to BLOCKED. A BLOCKED shape yields AUT_OUTPUT_SHAPE_UNKNOWN no matter how plausible the input looks. Only provenance REAL_CAPTURE may validate a shape, and captures are read ONLY from captures/normalized/ - a hand-authored file under tests_data/ can never be promoted to evidence.",
- "engine": "ship-gate/4.2.2",
+ "engine": "ship-gate/4.2.4",
  "schema": "shipgate.authority.shapes/1",
  "shapes": {
   "cosign.bundle.keyed.v0_3": {

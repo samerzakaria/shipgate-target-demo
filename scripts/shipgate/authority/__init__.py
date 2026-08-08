@@ -32,7 +32,7 @@ from .ci.adapter import CiAuthorityAdapter
 from .contracts import AuthorityConfig, AuthorityConfigError, VerifierResult, evaluate
 from .independent.adapter import IndependentAuthorityAdapter
 
-KIT_VERSION = "shipgate-authority/4.2.2"
+KIT_VERSION = "shipgate-authority/4.2.4"
 
 #: mode -> adapter. The only two adapters that exist; the scope is closed.
 ADAPTERS = {

@@ -479,7 +479,7 @@ class UiCrawlCollector(Collector):
 
     kind = EvidenceKind.UI_CRAWL
     name = "ui-crawl"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         data, err = _run_driver(ctx)
@@ -550,7 +550,7 @@ class A11yCollector(Collector):
 
     kind = EvidenceKind.ACCESSIBILITY
     name = "accessibility"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         data, err = _run_driver(ctx)
@@ -613,7 +613,7 @@ class PerfCollector(Collector):
 
     kind = EvidenceKind.PERFORMANCE
     name = "performance"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         data, err = _run_driver(ctx)

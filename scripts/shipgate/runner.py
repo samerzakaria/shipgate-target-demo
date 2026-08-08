@@ -105,7 +105,7 @@ def run(request):
 
     if refused is not None:
         evidence.add(Evidence.error(
-            EvidenceKind.CONTAINMENT, "execadapter", "4.2.2", binding,
+            EvidenceKind.CONTAINMENT, "execadapter", "4.2.4", binding,
             note=str(refused),
             payload={"boundary": record, "containmentRequired": True,
                      "allTargetContained": False, "anyTargetExecuted": False,
@@ -128,7 +128,7 @@ def run(request):
         run_scheduled(_cached(collectors, evidence_cache), ctx, evidence,
                       parallelism=request.policy.parallelism)
         evidence.add(Evidence.collected(
-            EvidenceKind.CONTAINMENT, "execadapter", "4.2.2", binding,
+            EvidenceKind.CONTAINMENT, "execadapter", "4.2.4", binding,
             adapter.containment_payload()))
 
     findings = preflight + _load_findings(workdir)

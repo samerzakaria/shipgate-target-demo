@@ -138,7 +138,7 @@ class MutationCollector(Collector):
 
     kind = EvidenceKind.MUTATION
     name = "mutation"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         root = Path(ctx.run_area or ctx.repo).resolve()

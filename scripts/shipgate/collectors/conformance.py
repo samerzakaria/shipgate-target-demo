@@ -492,7 +492,7 @@ class DesignConformanceCollector(Collector):
 
     kind = EvidenceKind.DESIGN_CONFORMANCE
     name = "design-conformance"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         adm = conformance_admission()
@@ -548,7 +548,7 @@ class CrossSurfaceCollector(Collector):
 
     kind = EvidenceKind.CROSS_SURFACE
     name = "cross-surface"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         adm = cross_surface_admission()

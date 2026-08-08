@@ -1,25 +1,12 @@
-# Target-side: build -> DECIDE -> attest -> deploy through a gated environment.
-#
-# WHAT CHANGED AND WHY. The v4.2.2 field kit shipped a target workflow that built and
-# attested an artifact but never ran ship-gate, so the `release-candidate` artifact carried
-# no `decision.json`. The reference verifier's very first layout check hard-requires one:
-#
-#     test -f candidate/decision.json || { echo "candidate/decision.json missing"; exit 1; }
-#
-# so the two shipped workflows could never compose. This one produces the decision through
-# ship-gate's supported public CLI — `gate.py run` — and uploads exactly the layout the
-# verifier enforces: decision.json plus EXACTLY ONE release file.
-#
-# Actions pinned by immutable commit SHA (verify pins on adoption).
 name: build and deploy
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: "deployment environment"
+        description: deployment environment
         required: false
-        default: "production"
+        default: production
 
 permissions:
   id-token: write
@@ -28,89 +15,148 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       artifact_digest: ${{ steps.digest.outputs.sha256 }}
       decision_digest: ${{ steps.decide.outputs.decision_digest }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          # ship-gate reads git state from .git directly; a shallow clone gives it a
-          # commit it cannot resolve, and subject.commit is a binding the verifier checks.
           fetch-depth: 0
+
+      - name: Prepare the pinned containment image and external held-out vault
+        env:
+          RUNNER_IMAGE: python:3.12-bookworm@sha256:3cd9086bdb30f7c9bc08a3fa621d9842e0d3f6f9291aeb4677e0547817c10b12
+        run: |
+          set -euo pipefail
+          docker pull "$RUNNER_IMAGE"
+          chmod -R a+rwX "$GITHUB_WORKSPACE"
+          VAULT="$RUNNER_TEMP/shipgate-heldout-vault"
+          mkdir -p "$VAULT/heldout/heldout"
+          cat > "$VAULT/heldout/heldout/test_composition.py" <<'PY'
+          import json
+          from service import add
+          ok = add(add(1, 2), 3) == 6
+          print(json.dumps({"numTotalTests": 1, "numPassedTests": int(ok),
+                            "numFailedTests": int(not ok),
+                            "numRuntimeErrorTestSuites": 0}))
+          raise SystemExit(0 if ok else 1)
+          PY
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          vault = pathlib.Path(os.environ["RUNNER_TEMP"]) / "shipgate-heldout-vault"
+          rel = "heldout/test_composition.py"
+          digest = hashlib.sha256((vault / "heldout" / rel).read_bytes()).hexdigest()
+          (vault / "heldout-manifest.json").write_text(json.dumps({
+              "heldout_files": [rel], "heldout_sha": {rel: digest},
+              "suites": [{"suiteId": "composition", "files": [rel]}],
+          }))
+          PY
+          cat > "$RUNNER_TEMP/shipgate-options.json" <<JSON
+          {
+            "base_url": "http://127.0.0.1:8765",
+            "routes": [{"method": "GET", "path": "/health"}],
+            "cujs": [{"id": "health", "title": "Health is served", "method": "GET", "path": "/health"}],
+            "vault": "$VAULT",
+            "heldout_cmd": "python3 heldout/test_composition.py",
+            "test_cmd": "python3 -m unittest discover -s tests -v",
+            "mutation_tool": "stryker",
+            "max_faults": 2,
+            "security_allow_partial": true
+          }
+          JSON
 
       - name: Build the release artifact
         run: |
           set -euo pipefail
           mkdir -p dist
-          echo "ship-gate validation artifact $GITHUB_SHA" > dist/note.txt
-          tar -czf dist/release.tgz dist/note.txt
-          rm -f dist/note.txt
+          printf 'ship-gate positive candidate %s\n' "$GITHUB_SHA" > dist/release.txt
+          tar -czf dist/release.tgz -C dist release.txt
+          rm dist/release.txt
 
       - name: Record the artifact digest
         id: digest
         run: |
-          set -euo pipefail
           SHA=$(sha256sum dist/release.tgz | cut -d' ' -f1)
           echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
-          echo "release.tgz sha256 = $SHA"
 
-      # THE DECISION. `--artifact` is what binds subject.artifactDigest to the exact bytes
-      # uploaded below, so the verifier's recomputed digest has something to agree with.
-      #
-      # `--mode advisory` keeps THIS step green while the decision on disk still records the
-      # truth. That is not a weakening: mode changes only whether this process blocks, never
-      # what the decision says (gate.py:123-128). A demo repository cannot satisfy the
-      # standard profile's 13 required evidence kinds, so this decision is honestly FAILED,
-      # and the authority path downstream refuses it with AUT_SEMANTIC_NOT_PASSED rather
-      # than attesting something that did not pass on the merits.
-      #
-      # `--static-only` keeps the run hermetic: no target code executes, so no containment
-      # boundary is required and nothing reaches the network.
-      - name: Produce the ship-gate decision (public CLI)
-        id: decide
+      - name: Start the disposable reference service
         run: |
-          set -euo pipefail
-          python3 scripts/gate.py run . \
-            --run-area . \
-            --profile standard \
-            --static-only \
-            --mode advisory \
-            --artifact dist/release.tgz \
-            --residual-risk "Field-validation target. Static collectors only; this repository is a deployment fixture, not a product."
-          test -f shipgate-workdir/decision.json
-          DD=$(python3 -c "import json;print(json.load(open('shipgate-workdir/decision.json'))['decisionDigest'])")
-          echo "decision_digest=$DD" >> "$GITHUB_OUTPUT"
-          echo "decision digest = $DD"
+          python3 service.py 8765 > "$RUNNER_TEMP/service.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/service.pid"
+          for i in $(seq 1 50); do
+            curl --fail --silent http://127.0.0.1:8765/health && exit 0
+            sleep 0.2
+          done
+          exit 1
 
-      # THE LAYOUT THE VERIFIER ENFORCES: decision.json + exactly one release file.
+      - name: Collect clean semantic round one
+        env:
+          SHIPGATE_EXEC_MODE: container
+          SHIPGATE_RUNNER_IMAGE: python:3.12-bookworm@sha256:3cd9086bdb30f7c9bc08a3fa621d9842e0d3f6f9291aeb4677e0547817c10b12
+        run: |
+          python3 scripts/gate.py run . --run-area . --profile standard --round 1 \
+            --mode advisory --artifact dist/release.tgz \
+            --options-file "$RUNNER_TEMP/shipgate-options.json" \
+            --residual-risk "Disposable non-UI reference service."
+          python3 - <<'PY'
+          import json
+          d = json.load(open("shipgate-workdir/decision.json"))["decision"]
+          assert d["semanticStatus"] == "FAILED", d["reasonCodes"]
+          assert "SEM_CONVERGENCE_NOT_REACHED" in d["reasonCodes"], d["reasonCodes"]
+          PY
+
+      - name: Collect clean semantic round two and require PASSED
+        id: decide
+        env:
+          SHIPGATE_EXEC_MODE: container
+          SHIPGATE_RUNNER_IMAGE: python:3.12-bookworm@sha256:3cd9086bdb30f7c9bc08a3fa621d9842e0d3f6f9291aeb4677e0547817c10b12
+        run: |
+          python3 scripts/gate.py run . --run-area . --profile standard --round 2 \
+            --mode enforce --artifact dist/release.tgz \
+            --options-file "$RUNNER_TEMP/shipgate-options.json" \
+            --residual-risk "Disposable non-UI reference service."
+          python3 - <<'PY'
+          import json, os
+          doc = json.load(open("shipgate-workdir/decision.json"))
+          assert doc["decision"]["semanticStatus"] == "PASSED"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("decision_digest=" + doc["decisionDigest"] + "\n")
+          PY
+
       - name: Assemble the release candidate
         run: |
-          set -euo pipefail
           mkdir -p candidate
           cp shipgate-workdir/decision.json candidate/decision.json
           cp dist/release.tgz candidate/release.tgz
-          echo "candidate/ contents:"; ls -1 candidate
           test "$(find candidate -maxdepth 1 -type f ! -name decision.json | wc -l)" = "1"
 
-      - name: Attest build provenance (GitHub artifact attestation)
-        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:
           subject-path: candidate/release.tgz
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: release-candidate
           path: candidate/
           if-no-files-found: error
 
+      - name: Upload semantic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: semantic-evidence
+          path: shipgate-workdir/
+          if-no-files-found: warn
+
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: ${{ inputs.environment }}
     steps:
-      - name: Deploy (the gated act itself)
+      - name: Deploy the gated candidate
         run: |
-          echo "deployed $GITHUB_SHA run=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT to ${{ inputs.environment }}"
-          echo "artifact sha256 = ${{ needs.build.outputs.artifact_digest }}"
-          echo "decision digest = ${{ needs.build.outputs.decision_digest }}"
+          echo "deployed $GITHUB_SHA run=$GITHUB_RUN_ID attempt=$GITHUB_RUN_ATTEMPT"
+          echo "artifact=${{ needs.build.outputs.artifact_digest }}"
+          echo "decision=${{ needs.build.outputs.decision_digest }}"

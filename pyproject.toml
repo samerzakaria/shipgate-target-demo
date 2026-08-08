@@ -1,0 +1,6 @@
+[project]
+name = "shipgate-target-demo"
+version = "1.0.0"
+
+[tool.shipgate]
+test = "python3 -m unittest discover -s tests -v"

@@ -144,7 +144,7 @@ class EnvFaultCollector(Collector):
 
     kind = EvidenceKind.ENV_FAULT
     name = "env-fault"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         root = Path(ctx.run_area or ctx.repo).resolve()

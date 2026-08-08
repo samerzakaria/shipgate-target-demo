@@ -498,7 +498,7 @@ class AdversarialProbeCollector(Collector):
 
     kind = EvidenceKind.ADVERSARIAL_PROBE
     name = "adversarial-probe"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         # ADMISSION FIRST. Before anything is measured against the real target, prove the

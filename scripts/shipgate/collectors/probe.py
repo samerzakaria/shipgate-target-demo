@@ -138,7 +138,7 @@ class RuntimeProbeCollector(Collector):
 
     kind = EvidenceKind.RUNTIME_PROBE
     name = "runtime-probe"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         base = (ctx.option("base_url") or "").strip()

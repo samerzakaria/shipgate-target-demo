@@ -41,7 +41,7 @@ class AuthorityAdapter:
     """Base class. Subclasses set `name`, `version`, `ceiling`, `verifier_classes`, `mode`."""
 
     name = "authority"
-    version = "shipgate-authority/4.2.2"
+    version = "shipgate-authority/4.2.4"
     mode = "ci"
     ceiling = ProvenanceStatus.UNAVAILABLE
     verifier_classes = ()

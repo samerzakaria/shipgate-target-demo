@@ -197,7 +197,8 @@ def rollback_protected(policy: Dict[str, Any]) -> Tuple[bool, str]:
 # parsing, no network. The transport lives in live.py; the shape gate that keeps raw GitHub
 # bytes from becoming a judged record without a real capture lives in SHAPES.json
 # (gh.run.v1, gh.deployments.v1, gh.deployment.statuses.v1, gh.run.approvals.v1 - all
-# BLOCKED in this release, each naming its unblock capture).
+# VALIDATED as of the 2026-08-08 field round, pinned to real captures from a genuinely
+# gated deployment and its self-approved counterpart; see SHAPES.json).
 
 #: The deployment states GitHub reports that mean "this deployment completed successfully".
 #: Exactly one value on purpose: "in_progress" and "queued" are not passage, and an unknown

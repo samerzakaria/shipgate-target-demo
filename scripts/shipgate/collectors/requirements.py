@@ -293,7 +293,7 @@ class RequirementsCollector(Collector):
 
     kind = EvidenceKind.REQUIREMENTS
     name = "requirements"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         adm = admission()

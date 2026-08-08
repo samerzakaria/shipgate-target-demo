@@ -1,0 +1,6 @@
+shipgate-workdir/
+__pycache__/
+reports/
+.shipgate-heldout-scratch/
+dist/
+candidate/

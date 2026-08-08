@@ -119,7 +119,7 @@ class Verifier:
 # =======================================================================================
 
 _ALLOWED: Dict[str, frozenset] = {
-    "$root": frozenset({"schema", "mode", "evidenceDir", "cosign", "rekor", "gh", "oidc",
+    "$root": frozenset({"schema", "mode", "evidenceDir", "externalTime", "cosign", "rekor", "gh", "oidc",
                         "freshnessMaxAgeSeconds", "expectedSubject", "note",
                         "verifier"}),
     "cosign": frozenset({"versionJson", "bundle", "verifyStdout", "verifyStderr",
@@ -201,6 +201,7 @@ class AuthorityConfig:
     gh: Dict[str, Any] = dataclasses.field(default_factory=dict)
     oidc: Dict[str, Any] = dataclasses.field(default_factory=dict)
     verifier: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    external_time: Optional[int] = None
     freshness_max_age_seconds: int = DEFAULT_FRESHNESS_MAX_AGE_SECONDS
     expected_subject: Dict[str, Any] = dataclasses.field(default_factory=dict)
     note: str = ""
@@ -238,6 +239,13 @@ class AuthorityConfig:
         if not isinstance(evidence_dir, str):
             raise AuthorityConfigError("evidenceDir must be a string path")
 
+        external_time = doc.get("externalTime")
+        if (external_time is not None
+                and (not isinstance(external_time, int) or isinstance(external_time, bool)
+                     or external_time <= 0)):
+            raise AuthorityConfigError(
+                f"externalTime must be a positive integer epoch, got {external_time!r}")
+
         return cls(
             mode=mode,
             evidence_dir=evidence_dir,
@@ -246,6 +254,7 @@ class AuthorityConfig:
             gh=_strict_section("gh", doc.get("gh")),
             oidc=_strict_section("oidc", doc.get("oidc")),
             verifier=_strict_section("verifier", doc.get("verifier")),
+            external_time=external_time,
             freshness_max_age_seconds=age,
             expected_subject=_strict_section("expectedSubject", doc.get("expectedSubject")),
             note=str(doc.get("note", "")),
@@ -304,6 +313,7 @@ class AuthorityConfig:
             "cosign": dict(self.cosign), "rekor": dict(self.rekor), "gh": dict(self.gh),
             "oidc": dict(self.oidc),
             "verifier": dict(self.verifier),
+            "externalTime": self.external_time,
             "freshnessMaxAgeSeconds": self.freshness_max_age_seconds,
             "expectedSubject": dict(self.expected_subject), "note": self.note,
             "source": self.source,
@@ -596,7 +606,22 @@ def evaluate(semantic_status, results, ceiling=ProvenanceStatus.INDEPENDENTLY_AT
             # checkpoint signed by the pinned Rekor key attests. The SET itself remains
             # shape-checked only, and that caveat is recorded in the freshness fact.
             external_time = fresh["integratedTime"]
-            time_source = "rekor-integrated-time"
+            time_source = {
+                "rekor.integratedTime": "rekor-integrated-time",
+                "rekor-integrated-time": "rekor-integrated-time",
+                "github-attestation-tlog": "github-attestation-tlog",
+                "github-run-timestamp": "github-run-timestamp",
+            }.get(str(fresh.get("source") or ""), "")
+        signed_external_time = binding.get("externalTime")
+        policy_record = binding.get("policy") if isinstance(binding.get("policy"), dict) else {}
+        windowed_policy = (policy_record.get("notBefore") is not None
+                           or policy_record.get("notAfter") is not None)
+        external_time_agrees = (not windowed_policy or (
+            isinstance(signed_external_time, int)
+            and not isinstance(signed_external_time, bool)
+            and signed_external_time == external_time))
+        if not external_time_agrees and R.AUT_POLICY_WINDOW_INVALID not in codes:
+            codes.append(R.AUT_POLICY_WINDOW_INVALID)
         builder_side_ids = []
         ids = identity_fact.get("ids") if isinstance(identity_fact, dict) else None
         if isinstance(ids, dict):
@@ -617,7 +642,7 @@ def evaluate(semantic_status, results, ceiling=ProvenanceStatus.INDEPENDENTLY_AT
             expected_run_id=str(binding.get("runId") or ""),
             builder_ids=tuple(builder_side_ids),
             observation_mode=str(binding.get("observationMode") or ""))
-        if verdict["authorized"]:
+        if verdict["authorized"] and external_time_agrees:
             have = dict(have)
             have["principal"] = dict(principal, policyEnforcement=verdict)
         else:

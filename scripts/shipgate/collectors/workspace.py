@@ -120,7 +120,7 @@ class WorkspaceCollector(Collector):
 
     kind = EvidenceKind.WORKSPACE
     name = "workspace"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         area = Path(ctx.run_area).resolve() if ctx.run_area else None

@@ -870,11 +870,11 @@ class GithubEnvironmentPrincipalVerifier(Verifier):
         """(record_or_None, note). Fail closed, and say precisely which door is shut.
 
         The record may only come from shape-VALIDATED parses of the observed deployment
-        parts. All four shapes are BLOCKED in this release (no real capture is obtainable
-        from the environment that built it), so the honest outputs today are ABSENT (the
-        parts were never observed) or BLOCKED (observed, but no validated shape exists to
-        admit them). Either way the award side refuses independence; the note tells the
-        operator which capture would change that, per SHAPES.json unblockProcedure.
+        parts. All four shapes are VALIDATED as of the 2026-08-08 field round, pinned to
+        real captures, and the extraction below was written against those bytes. The
+        honest outputs are therefore ABSENT (the parts were never observed), BLOCKED (a
+        shape lost its capture or its digest moved) or OBSERVED (composed from validated
+        parses). Judgement stays in enforcement.judge_deployment; this only extracts.
         """
         from . import shapes as shapes_module
         parts = ("run", "deployments", "deploymentStatuses", "approvals")

@@ -1,7 +1,7 @@
 """Single source of truth for release / schema identity. Stdlib only, no internal imports."""
 
 SKILL_NAME = "ship-gate"
-SKILL_VERSION = "4.2.2"
+SKILL_VERSION = "4.2.4"
 
 # Identity stamped into every decision so a consumer can tell WHICH engine produced it.
 ENGINE_ID = f"{SKILL_NAME}/{SKILL_VERSION}"

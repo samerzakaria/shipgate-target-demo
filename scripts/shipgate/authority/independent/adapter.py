@@ -38,7 +38,7 @@ class IndependentAuthorityAdapter(AuthorityAdapter):
     """Emits at most `ProvenanceStatus.INDEPENDENTLY_ATTESTED`."""
 
     name = "shipgate-authority-independent"
-    version = "shipgate-authority-independent/4.2.2"
+    version = "shipgate-authority-independent/4.2.4"
     mode = "independent"
     ceiling = ProvenanceStatus.INDEPENDENTLY_ATTESTED
     verifier_classes = (

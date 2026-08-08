@@ -34,7 +34,7 @@ class Collector(abc.ABC):
 
     kind: EvidenceKind = None
     name: str = ""
-    version: str = "4.2.2"
+    version: str = "4.2.4"
     #: When False, `run` returns ABSENT evidence instead of calling `collect`.
     applicable_always: bool = True
 

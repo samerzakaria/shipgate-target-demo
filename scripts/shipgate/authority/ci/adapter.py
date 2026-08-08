@@ -47,7 +47,7 @@ class CiAuthorityAdapter(AuthorityAdapter):
     """
 
     name = "shipgate-authority-ci"
-    version = "shipgate-authority-ci/4.2.2"
+    version = "shipgate-authority-ci/4.2.4"
     mode = "ci"
     ceiling = ProvenanceStatus.CI_ATTESTED
     verifier_classes = (

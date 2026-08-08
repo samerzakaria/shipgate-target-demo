@@ -735,7 +735,7 @@ class FaultAuditCollector(Collector):
 
     kind = EvidenceKind.FAULT_AUDIT
     name = "fault-audit"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         root = Path(ctx.run_area or ctx.repo).resolve()
@@ -871,7 +871,7 @@ class FailFirstCollector(Collector):
 
     kind = EvidenceKind.FAIL_FIRST
     name = "fail-first"
-    version = "4.2.2"
+    version = "4.2.4"
 
     def collect(self, ctx):
         root = Path(ctx.run_area or ctx.repo).resolve()
