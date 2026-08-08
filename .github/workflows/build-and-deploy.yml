@@ -24,6 +24,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check out the pinned Ship Gate implementation outside the target tree
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: samerzakaria/ship-gate-verifier
+          ref: 95585fdee4930e3b82a0fbf64ec983e0c527229a
+          path: node_modules/shipgate-tool
+          persist-credentials: false
+
       - name: Prepare the pinned containment image and external held-out vault
         env:
           RUNNER_IMAGE: python:3.12-bookworm@sha256:3cd9086bdb30f7c9bc08a3fa621d9842e0d3f6f9291aeb4677e0547817c10b12
@@ -58,8 +66,8 @@ jobs:
             "routes": [{"method": "GET", "path": "/health"}],
             "cujs": [{"id": "health", "title": "Health is served", "method": "GET", "path": "/health"}],
             "vault": "$VAULT",
-            "heldout_cmd": "python3 heldout/test_composition.py",
-            "test_cmd": "python3 -m unittest discover -s tests -v",
+            "heldout_cmd": "PYTHONPATH=. python3 -B heldout/test_composition.py",
+            "test_cmd": "PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -v",
             "mutation_tool": "stryker",
             "max_faults": 2,
             "security_allow_partial": true
@@ -95,7 +103,7 @@ jobs:
           SHIPGATE_EXEC_MODE: container
           SHIPGATE_RUNNER_IMAGE: python:3.12-bookworm@sha256:3cd9086bdb30f7c9bc08a3fa621d9842e0d3f6f9291aeb4677e0547817c10b12
         run: |
-          python3 scripts/gate.py run . --run-area . --profile standard --round 1 \
+          python3 node_modules/shipgate-tool/scripts/gate.py run . --run-area . --profile standard --round 1 \
             --mode advisory --artifact dist/release.tgz \
             --options-file "$RUNNER_TEMP/shipgate-options.json" \
             --residual-risk "Disposable non-UI reference service."
@@ -112,7 +120,7 @@ jobs:
           SHIPGATE_EXEC_MODE: container
           SHIPGATE_RUNNER_IMAGE: python:3.12-bookworm@sha256:3cd9086bdb30f7c9bc08a3fa621d9842e0d3f6f9291aeb4677e0547817c10b12
         run: |
-          python3 scripts/gate.py run . --run-area . --profile standard --round 2 \
+          python3 node_modules/shipgate-tool/scripts/gate.py run . --run-area . --profile standard --round 2 \
             --mode enforce --artifact dist/release.tgz \
             --options-file "$RUNNER_TEMP/shipgate-options.json" \
             --residual-risk "Disposable non-UI reference service."
