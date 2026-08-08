@@ -1,0 +1,531 @@
+{
+ "captureCorpus": {
+  "normalized": "captures/normalized/ (UTF-8; the ONLY directory a shape may validate from)",
+  "provenanceDoc": "captures/raw/PROVENANCE.txt, captures/raw/PROVENANCE_shapes.txt and captures/raw/PROVENANCE_v03.txt",
+  "raw": "captures/raw/ (byte-exact as received; repo.json, env_list.json, env_one.json, env_secrets.json and _NOTE_protected_env.txt arrived UTF-16LE+BOM from PowerShell; the 2026-08-06 v0.3 round arrived plain UTF-8, so raw/ and normalized/ are byte-identical for those files and both paths are still populated so the loader's dual-path checks run uniformly)",
+  "sanitizationCaveat": "The 2026-08-05 shape-capture round (oidc_claims.json, cosign_keyless_bundle.json, env_protected_one.json, env_protected_list.json) came from a throwaway PUBLIC repository that has since been deleted, with name strings sanitized to OWNER/REPO. The cosign keyless bundle's Fulcio certificate embeds the ORIGINAL repository identity in signed DER, which cannot be string-replaced. Consequence, recorded rather than smoothed over: identity cross-checks between the sanitized JSON and the unsanitized certificate WILL disagree, and the kit reports that disagreement instead of relaxing the check.",
+  "shardingCaveat": "Rekor is SHARDED. A REST entry's top-level logIndex is GLOBAL across every shard the log has ever had; verification.inclusionProof.logIndex is LOCAL to the active shard's Merkle tree. On the 2021 capture (logIndex 1000000) the two happen to be equal because that entry predates the shard splits, and an equality check written against that capture alone looked correct. rekor_rest_entry_fresh.json (global 2354787700, shard-local 2232883438) disproves it. The invariant that IS true, and that the kit now enforces when rekor.restLogInfo is supplied, is global - local == sum(inactiveShards[].treeSize) \u2014 121904262 for this capture, exactly."
+ },
+ "description": "Every output shape this kit is allowed to parse, and the evidence that we have actually seen it. A parser may only succeed on a VALIDATED shape; shapes.ShapeRegistry re-hashes each captureFile at load time and demotes any entry whose capture is missing or altered to BLOCKED. A BLOCKED shape yields AUT_OUTPUT_SHAPE_UNKNOWN no matter how plausible the input looks. Only provenance REAL_CAPTURE may validate a shape, and captures are read ONLY from captures/normalized/ - a hand-authored file under tests_data/ can never be promoted to evidence.",
+ "engine": "ship-gate/4.2.2",
+ "schema": "shipgate.authority.shapes/1",
+ "shapes": {
+  "cosign.bundle.keyed.v0_3": {
+   "captureFile": "cosign_signblob_bundle.json",
+   "captureSha256": "4b878dd7eb2d63b6fa756517e5ace42fb2abf45ea77fb0ccb0d2e654dea58dc0",
+   "command": "cosign sign-blob --key k.key --bundle <f> --yes blob",
+   "note": "Local-key bundle. Internally cross-checked: messageDigest == tlog body data hash, messageSignature == tlog body signature, publicKey.hint == b64(sha256(SPKI DER)), and the embedded inclusion proof verifies (RFC 6962) against its own checkpoint root.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_bundle_keyed.schema.json",
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.2",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "Operator-asserted v3.1.2, now confirmed by the capture author (see captures/raw/PROVENANCE_v03.txt, which states the rest of the corpus was captured with cosign v3.1.2 / rekor-cli v1.5.3). Corroborated in-corpus by cosign_version.json, which came from the same round.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "cosign.bundle.keyless.legacy.v1": {
+   "bindingNote": "SHAPE validated, BINDING deliberately not. The capture's JSON was sanitized to OWNER/REPO, but the repository name also lives inside the Fulcio certificate's SIGNED DER, where no sanitiser could reach it: the cert says 'samerzakaria/shipgate-shape-capture'. So cosign.check_certificate_identity() compares the two and DISAGREES on this fixture. That is the correct behaviour of a correct parser meeting a sanitized fixture, and the check is NOT relaxed to make it pass. Fields that were not sanitized still agree: repository_owner_id 228308318, the commit sha c25f0980\u2026, ref, runner environment, event name and OIDC issuer. Binding is proved separately by the synthetic-verifier-result tests in selfcheck.",
+   "bindingValidated": false,
+   "captureFile": "cosign_keyless_bundle.json",
+   "captureSha256": "f6906fad1cbf265263edfc55987d02de1c052f2b9567570dbbc28f072c3a967e",
+   "command": "cosign sign-blob --bundle <f> --yes <blob>   (keyless: OIDC + Fulcio)",
+   "cosignProvenance": "sigstore/cosign-installer@v3",
+   "ghProvenance": "ambient runner install",
+   "note": "Captured 2026-08-05 from a THROWAWAY PUBLIC repository, since deleted; the identities are TEST identities. Name strings were sanitized to OWNER/REPO by the capture author. IMPORTANT: this is the LEGACY cosign bundle serialisation {base64Signature, cert, rekorBundle} \u2014 a flat triple with no mediaType \u2014 NOT a keyless flavour of the sigstore bundle v0.3, which is a different shape and remains BLOCKED under cosign.bundle.keyless.v0_3. The producing cosign version is NOT stated by the capture author, so the version gate cannot be applied to this shape; what is validated is the SHAPE. Real cross-checks that DO hold: base64Signature == the logged signature, cert == the logged public key, and integratedTime 1785949299 falls inside the certificate's 600-second Fulcio validity window [1785949299, 1785949899]. The rekorBundle carries only a SignedEntryTimestamp \u2014 there is NO inclusion proof in this shape.",
+   "producedBy": "cosign, on a GitHub-hosted runner",
+   "provenance": "REAL_CAPTURE",
+   "runnerEnvironment": "GitHub-hosted",
+   "schemaFile": "cosign_bundle_keyless_legacy.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "RUNNER-RESOLVED",
+   "versionConstraint": null,
+   "versionProvenance": "WAS `UNSTATED`. It is now known: this capture came from a GitHub Actions job whose cosign was installed by sigstore/cosign-installer@v3, which resolves to the latest v3.x at job time and therefore pins nothing. versionConstraint is null and stays null \u2014 the honest answer is 'some v3.x, we cannot say which', not a plausible number that would make the column look tidy.",
+   "versionTier": "RUNNER-RESOLVED"
+  },
+  "cosign.bundle.keyless.v0_3": {
+   "blockedEvidence": {
+    "captureFile": "keyless_attempt.txt",
+    "captureSha256": "88f3e03e8e20abf4355f63ace0d0959f8b5eadd36730fa80cde41cdc9543e29f",
+    "command": "cosign sign-blob --new-bundle-format --bundle <f> --yes blob.txt  (no --key)",
+    "says": "Generating ephemeral keys... / Non-interactive mode detected, using device flow. \u2014 cosign then blocks on a device-code prompt. Evidence of IMPOSSIBILITY, never of a shape: it validates nothing and can never promote this entry."
+   },
+   "blockedReason": "STILL BLOCKED after the 2026-08-06 v0.3 round. bundle_v03.json IS a real sigstore bundle v0.3 \u2014 but it is the KEYED variant: verificationMaterial carries publicKey.hint. The keyless variant carries a Fulcio `certificate` instead, which is a different verificationMaterial and a different schema. Capturing the keyed envelope does not validate the keyless one, and marking it VALIDATED from a differently-shaped file is the exact fabrication this registry exists to prevent. The blocker is not tooling: it is that keyless signing needs an OIDC token, and without one cosign falls back to an INTERACTIVE device-code flow and waits for a human at a browser \u2014 so no unattended capture is possible in this sandbox. keyless_attempt.txt is that evidence, digest-pinned below and re-hashed at load.",
+   "captureFile": null,
+   "captureSha256": null,
+   "command": "cosign sign-blob --bundle <f> --new-bundle-format --yes <blob>  (KEYLESS)",
+   "note": "Parser branch implemented and live: a v0.3 bundle carrying verificationMaterial.certificate or .x509CertificateChain is RECOGNISED as keyless and REFUSED with AUT_OUTPUT_SHAPE_UNKNOWN. Unblock by running `cosign sign-blob --new-bundle-format` keylessly in an environment that HAS an OIDC token (a GitHub Actions job with id-token: write). This does NOT block the keyless identity path, which is live via cosign.bundle.keyless.legacy.v1.",
+   "provenance": "NONE",
+   "schemaFile": "cosign_bundle_keyless.schema.json",
+   "status": "BLOCKED",
+   "tool": "cosign",
+   "toolVersion": "NOT-CAPTURED",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "There is no capture, so there is no producing version to state. This is NOT UNSTATED: UNSTATED would mean a capture exists whose provenance nobody recorded. Here the output does not exist at all. If it is ever captured in Actions it will land in the RUNNER-RESOLVED tier.",
+   "versionTier": "NOT-CAPTURED"
+  },
+  "cosign.bundle.v0_3.keyed": {
+   "additionalCaptures": [
+    {
+     "captureFile": "cosign_version_3_1_3.json",
+     "captureSha256": "04983c4e5afb1a85ec8b13c80db5412c3fdc8d9e32cae6ac973baedbee13ad66",
+     "command": "cosign version --json",
+     "note": "the OBSERVED version claim for this shape; parsed by cosign.version.v1"
+    },
+    {
+     "captureFile": "cosign.pub",
+     "captureSha256": "a62e747c6755d122b1eed16116983bcc059c93ce5654bb44570776a757152f66",
+     "command": "cosign generate-key-pair (throwaway, in-sandbox)",
+     "note": "the public half of the signing key. Pinned because the bundle's publicKey.hint is b64(sha256(SPKI DER)) of THIS key and the selfcheck recomputes it from this file rather than trusting the logged copy."
+    }
+   ],
+   "bindingNote": "SHAPE validated. BINDING deliberately not: this is a KEYED bundle, so it proves possession of a key and nothing about WHO held it \u2014 there is no certificate and no identity to bind. It signs the string \"ship-gate v4.0 capture blob\", which is not a ship-gate decision. What it DOES bind, and what is checked, is internal and cross-source: messageDigest == tlog body data hash, messageSignature == tlog body signature, publicKey.hint == b64(sha256(SPKI DER of cosign.pub)), the RFC 6962 inclusion proof recomputes rootHash 36afc581af\u2026, the checkpoint root and size match that proof, the checkpoint key hint matches logId[:8], and the tlog entry agrees with rekor_rest_entry_fresh.json on logIndex AND integratedTime (the canonicalizedBody is byte-identical to the REST entry's body).",
+   "bindingValidated": false,
+   "captureFile": "bundle_v03.json",
+   "captureSha256": "24b50c41a9642f1d722b758a835214f72d8e44cb2c165fb8ee0ccdf2a70096b8",
+   "command": "cosign sign-blob --key cosign.key --new-bundle-format --bundle <f> --yes blob.txt",
+   "note": "IMPORTANT, AND THE MANIFEST SHOULD NOT PRETEND OTHERWISE: this is the SAME serialisation as cosign.bundle.keyed.v0_3, which has been VALIDATED since the original round \u2014 cosign_signblob_bundle.json is already a mediaType v0.3+json envelope with verificationMaterial.tlogEntries and an embedded inclusion proof. The v0.3 keyed envelope was NOT first captured here. What IS new: (1) a second, independent capture of the shape from a DIFFERENT producing version (v3.1.3 vs v3.1.2), so tampering with either capture no longer blocks v0.3 parsing \u2014 cosign.parse_bundle validates against whichever of the two entries is still VALIDATED; (2) a Rekor REST entry bound to THIS bundle, which the corpus never had; (3) the shard-offset case that disproved the parser's proof.logIndex == entry.logIndex assumption. The two ids are near-identical on purpose and it is a trap \u2014 cosign.bundle.keyed.v0_3 (v3.1.2) vs cosign.bundle.v0_3.keyed (v3.1.3); selfcheck asserts they share a schemaFile and that both are live. Captured 2026-08-06 in an ephemeral Claude sandbox against the PUBLIC Sigstore/Rekor infrastructure with a freshly downloaded cosign v3.1.3 and a throwaway signing key generated in-sandbox (the private key is NOT in the corpus; cosign.pub is, because verification needs it and it is by definition public). Nothing required sanitising: the signed blob is the literal string \"ship-gate v4.0 capture blob\" and the Rekor entries are public log data.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_bundle_keyed.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.3",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "cosign v3.1.3, OBSERVED: cosign_version_3_1_3.json is pinned below as an additional capture and is the tool printing its own version. Deliberately NOT averaged with the v3.1.2 that produced the rest of the corpus \u2014 a version gate that pins the wrong version is worse than one that admits there are two.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "cosign.verifyblob.fail.v1": {
+   "captureFile": "cosign_verify_fail.txt",
+   "captureSha256": "611a1bff237d95bdd14cbce43fb42bedf7a48f24397670b286175d8316566797",
+   "command": "cosign verify-blob ... <tampered blob>  (rc=1)",
+   "note": "The captured tamper rejection text. Any OTHER text is unknown, never success and never a known failure.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_verify_blob_text.schema.json",
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.2",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "Operator-asserted v3.1.2, now confirmed by the capture author (see captures/raw/PROVENANCE_v03.txt, which states the rest of the corpus was captured with cosign v3.1.2 / rekor-cli v1.5.3). Corroborated in-corpus by cosign_version.json, which came from the same round.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "cosign.verifyblob.ok.v1": {
+   "captureFile": "cosign_verify_ok.txt",
+   "captureSha256": "80a53f76c7ed6969dade3b6ee47cdb753162db7c00be625448999d08bae77ed8",
+   "command": "cosign verify-blob --key k.pub --bundle <f> blob  (rc=0)",
+   "note": "The ONLY accepted success text. No JSON mode exists for verify-blob.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_verify_blob_text.schema.json",
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.2",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "Operator-asserted v3.1.2, now confirmed by the capture author (see captures/raw/PROVENANCE_v03.txt, which states the rest of the corpus was captured with cosign v3.1.2 / rekor-cli v1.5.3). Corroborated in-corpus by cosign_version.json, which came from the same round.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "cosign.verifyblob.v03.fail.v1": {
+   "bindingValidated": false,
+   "captureFile": "verify_v03_fail.txt",
+   "captureSha256": "611a1bff237d95bdd14cbce43fb42bedf7a48f24397670b286175d8316566797",
+   "command": "cosign verify-blob --key cosign.pub --bundle bundle_v03.json <tampered>  (rc=1)",
+   "note": "BYTE-IDENTICAL to cosign_verify_fail.txt (sha256 611a1bff\u2026): the two-line ASN.1 rejection is unchanged from v3.1.2 to v3.1.3. Same caveat as the ok capture \u2014 VERSION coverage, not shape coverage. Captured 2026-08-06 in an ephemeral Claude sandbox against the PUBLIC Sigstore/Rekor infrastructure with a freshly downloaded cosign v3.1.3 and a throwaway signing key generated in-sandbox (the private key is NOT in the corpus; cosign.pub is, because verification needs it and it is by definition public). Nothing required sanitising: the signed blob is the literal string \"ship-gate v4.0 capture blob\" and the Rekor entries are public log data.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_verify_blob_text.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.3",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "cosign v3.1.3, OBSERVED via cosign_version_3_1_3.json.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "cosign.verifyblob.v03.ok.v1": {
+   "bindingValidated": false,
+   "captureFile": "verify_v03_ok.txt",
+   "captureSha256": "80a53f76c7ed6969dade3b6ee47cdb753162db7c00be625448999d08bae77ed8",
+   "command": "cosign verify-blob --key cosign.pub --bundle bundle_v03.json blob.txt  (rc=0)",
+   "note": "BYTE-IDENTICAL to cosign_verify_ok.txt (sha256 80a53f76\u2026): cosign v3.1.3 prints exactly the same 'Verified OK' as v3.1.2. That is stated rather than hidden \u2014 this entry adds VERSION coverage, not shape coverage, and its value is the negative result that the success text did NOT drift across the version bump. cosign.parse_verify_blob needs at least one validated ok-shape and one validated fail-shape before it will classify anything, so this capture is redundancy for that gate rather than decoration. Captured 2026-08-06 in an ephemeral Claude sandbox against the PUBLIC Sigstore/Rekor infrastructure with a freshly downloaded cosign v3.1.3 and a throwaway signing key generated in-sandbox (the private key is NOT in the corpus; cosign.pub is, because verification needs it and it is by definition public). Nothing required sanitising: the signed blob is the literal string \"ship-gate v4.0 capture blob\" and the Rekor entries are public log data.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_verify_blob_text.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.3",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "cosign v3.1.3, OBSERVED via cosign_version_3_1_3.json.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "cosign.version.v1": {
+   "captureFile": "cosign_version.json",
+   "captureSha256": "d4155329284b3022c03da5d0acae6d22cd1ba84d17b9ab3d6b1b5f8e13d9bec0",
+   "command": "cosign version --json",
+   "note": "Machine version block. The only supported source of the cosign version.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "cosign_version.schema.json",
+   "status": "VALIDATED",
+   "tool": "cosign",
+   "toolVersion": "v3.1.2",
+   "versionConstraint": ">=3.0.0,<4.0.0",
+   "versionProvenance": "cosign_version.json IS this capture: the tool printed its own version.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "gh.attestation.verify.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "gh_attestation_verify_ok_2.90.0.json",
+     "captureSha256": "862fc61b6321cf8c70786c2946a38e3e588f83973c49d3b0aa44f6b6e8b20adc",
+     "note": "v4.2.1: the SECOND validated version point. Real gh 2.90.0 (built from the cli/cli v2.90.0 release-tag source, version stamped; official binaries unreachable from the build environment), same artifact/bundle/trusted root, real exit 0. Two real points now stand behind the >=2.60.0,<3.0.0 range claim. See the v4.2.1 addendum in PROVENANCE_gh_attestation.txt."
+    },
+    {
+     "captureFile": "gh_attestation_verify_ok_2.90.0_tz+03.json",
+     "captureSha256": "0c09129917da0032389755c89ed20f4b652d758de5177bb81700e08c7a7e624f",
+     "note": "v4.2.2: the ROOT-CAUSE capture. The same real gh 2.90.0 verification run under TZ=Asia/Riyadh - gh formats the tlog time in the machine's local zone (both 2.90.0 and 2.97.0 do), so the timestamp reads 2026-08-05T00:31:32+03:00. Validates the offset branch of the timestamp pattern. See the v4.2.2 addendum in PROVENANCE_gh_attestation.txt."
+    }
+   ],
+   "bindingNote": "The capture's identity is real and unsanitised, so binding CAN be exercised against a decision whose subject is sigstore/sigstore-js@769a53d8713248a8bf49edfc2a5d1955b0dcc24d with the artifact's sha512 - which is exactly what the reachability tests construct.",
+   "bindingValidated": true,
+   "captureFile": "gh_attestation_verify_ok.json",
+   "captureSha256": "067aa834607df69690c11da65af4fa25fead9e350ba5873a4d6b11192f38f9b6",
+   "command": "gh attestation verify <artifact> --repo <owner/repo> --digest-alg <alg> --format json [--bundle <b>] [--custom-trusted-root <r>]",
+   "note": "GitHub's own verifier's machine output, from a REAL offline verification of the npm package @sigstore/verify@4.1.2's SLSA provenance (attested by sigstore/sigstore-js release.yml on a github-hosted runner, tlog 2026-08-04T21:31:32Z). Nothing sanitised: real repository, real numeric ids, real commit, real run. See PROVENANCE_gh_attestation.txt for the exact procedure and the four failure captures beside it. PERISHABLE for freshness purposes, like every dated capture. v4.2.1: timestamps accept RFC 3339 UTC with optional fractional seconds after a real gh build emitting them was refused; a second real capture (gh 2.90.0) was added as additionalCaptures. v4.2.2: the actual field failure was LOCAL-ZONE timestamps, not fractional seconds; ghexec pins TZ=UTC and the pattern accepts explicit-zone RFC 3339.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_attestation_verify.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2026-07-31",
+   "toolVersion": "v2.90.0, v2.97.0",
+   "versionConstraint": ">=2.60.0,<3.0.0",
+   "versionProvenance": "gh_version.txt (v2.97.0) and gh_version_2.90.0.txt are the observed version captures for their respective rounds \u2014 each binary printed its own version in the session that produced its verify capture.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "gh.deployment.statuses.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "gh_deployment_statuses_selfok.json",
+     "captureSha256": "2fb8594cd8422dcab70750c476c87d50bf4c33c363b421e046ee2721f88cb5aa",
+     "note": "Status transitions for the `selfok` deployment."
+    }
+   ],
+   "captureFile": "gh_deployment_statuses.json",
+   "captureSha256": "4f99ace7bb87f77ea46a956593b24565fa58f8ba59afd41fe205e6d821e64a66",
+   "command": "gh api repos/{owner}/{repo}/deployments/{deployment_id}/statuses",
+   "note": "Deployment status transitions for both deployments, same round. These carry the terminal state and the status records' own URLs, which is what `statusRunBound` is derived from - a status that does not name this run is not evidence about this run.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_deployment_statuses.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-10-01",
+   "toolVersion": "v2.81.0",
+   "versionConstraint": ">=2.60.0,<3.0.0",
+   "versionProvenance": "gh_version_2.81.0.txt IS the producing binary printing its own version: it was captured by capture-evidence.sh in the same session, from the same gh process tree, as the responses pinned here. Observed, not asserted, which is why this is OBSERVED-CAPTURE and carries no versionCorroboration link.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "gh.deployments.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "gh_deployments_selfok.json",
+     "captureSha256": "f2c4b13c3d5b8c82d3d4d78dfcd8d17ba7ab1467b34f4393d1c585de181d9535",
+     "note": "The `selfok` deployment list for the same commit."
+    }
+   ],
+   "captureFile": "gh_deployments.json",
+   "captureSha256": "040a0ff3cba7c4a3fc23e2144f000a249d1f8a4665c55ba3abf0aefb6ec57b50",
+   "command": "gh api 'repos/{owner}/{repo}/deployments?environment={env}&sha={sha}'",
+   "note": "Deployment lists for each run's environment+sha, same 2026-08-08 capture round. Primary is the `production` deployment of run 31231928826; the `selfok` counterpart is pinned beside it. These carry deploymentId and the deployed sha, which is what binds a deployment to a decision's commit.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_deployments.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-10-01",
+   "toolVersion": "v2.81.0",
+   "versionConstraint": ">=2.60.0,<3.0.0",
+   "versionProvenance": "gh_version_2.81.0.txt IS the producing binary printing its own version: it was captured by capture-evidence.sh in the same session, from the same gh process tree, as the responses pinned here. Observed, not asserted, which is why this is OBSERVED-CAPTURE and carries no versionCorroboration link.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "gh.environment.list.v1": {
+   "captureFile": "env_list.json",
+   "captureSha256": "44c0c89f34d3b01cf321628f058221943290823daeb6284047b5276e5091e381",
+   "command": "gh api repos/{owner}/{repo}/environments",
+   "note": "One environment, itself the negative fixture. Captured 2026-08-05 from gh v2.65.0 against the private repo samerzakaria/ClearReq. PROVENANCE.txt predates these four files and still says 'gh api captures NOT included'; they were added afterwards and arrived UTF-16LE+BOM from PowerShell (see captures/raw/). The gh version is asserted by the capture operator, not by a captured 'gh --version' - so the gh version gate is advisory and the SHAPE is what is validated.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_environment_list.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-01-06",
+   "toolVersion": "v2.65.0",
+   "versionConstraint": ">=2.40.0,<3.0.0",
+   "versionCorroboration": "https://github.com/cli/cli/releases/tag/v2.65.0",
+   "versionProvenance": "Operator-asserted gh 2.65.0, confirmed, and now CORROBORATED against the upstream release record: cli/cli tag v2.65.0, published 2025-01-06 (versionCorroboration). The assertion and the release date no longer rest on the operator alone. No captured `gh --version` exists, so the tier stays OPERATOR-ASSERTED-CONFIRMED rather than OBSERVED-CAPTURE \u2014 corroborating that a version EXISTS and was released when claimed is not the same as watching the binary that produced this capture print its own version. The gh version gate stays ADVISORY; the SHAPE is what is validated.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "gh.environment.protected.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "env_protected_list.json",
+     "captureSha256": "5be1e42a508180bcc83fd11503340d3f9ed5968961c7f392b6c82aa173837eee",
+     "command": "gh api repos/{owner}/{repo}/environments",
+     "note": "the same protected environment as seen through the LIST endpoint; parsed by gh.environment.list.v1 and cross-checked against the single record"
+    }
+   ],
+   "bindingNote": "SHAPE validated; the environment does NOT qualify as an independent principal and is still refused with AUT_PRINCIPAL_NOT_DISTINCT. See gh.is_qualifying_environment for the reasoning: prevent_self_review=false lets the builder approve itself, can_admins_bypass=true lets an admin skip the gate entirely, and deployment_branch_policy=null lets any branch reach it. What CHANGED with this capture is the QUALITY of the refusal: it is now 'we have seen this shape and it is not a boundary' rather than 'we have never seen this shape'.",
+   "bindingValidated": false,
+   "captureFile": "env_protected_one.json",
+   "captureSha256": "7a2630f769073aeee85e8cba10844195ebc4214b78651383452cac8d0b17de10",
+   "command": "gh api repos/{owner}/{repo}/environments/{env}   (WITH protection rules)",
+   "cosignProvenance": "sigstore/cosign-installer@v3",
+   "ghProvenance": "ambient runner install",
+   "note": "Captured 2026-08-05 from a THROWAWAY PUBLIC repository, since deleted; the identities are TEST identities. Name strings were sanitized to OWNER/REPO by the capture author. A genuinely protected environment: one required_reviewers rule with one real User reviewer. It is nonetheless the SECOND negative fixture \u2014 the first (env_one.json) has no rules at all, this one has rules that do not constrain the builder. Together they cover both ways an environment can look like a trust boundary without being one.",
+   "producedBy": "gh, the runner's ambient install",
+   "provenance": "REAL_CAPTURE",
+   "runnerEnvironment": "GitHub-hosted",
+   "schemaFile": "gh_environment_protected.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolVersion": "RUNNER-RESOLVED",
+   "versionConstraint": null,
+   "versionProvenance": "WAS `UNSTATED`. It is now known: the runner's ambient gh install, in the same throwaway-repo Actions job. GitHub does not pin the runner image's gh version, so versionConstraint is null.",
+   "versionTier": "RUNNER-RESOLVED"
+  },
+  "gh.environment.secrets.v1": {
+   "captureFile": "env_secrets.json",
+   "captureSha256": "78d90bfa13c1f88e298869b3b99184e6810df58fbf300345d527702ce89d3de8",
+   "command": "gh api repos/{owner}/{repo}/environments/{env}/secrets",
+   "note": "EMPTY-LIST shape. total_count 0 with secrets [] parses to zero secrets, NOT an error. Captured 2026-08-05 from gh v2.65.0 against the private repo samerzakaria/ClearReq. PROVENANCE.txt predates these four files and still says 'gh api captures NOT included'; they were added afterwards and arrived UTF-16LE+BOM from PowerShell (see captures/raw/). The gh version is asserted by the capture operator, not by a captured 'gh --version' - so the gh version gate is advisory and the SHAPE is what is validated.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_environment_secrets.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-01-06",
+   "toolVersion": "v2.65.0",
+   "versionConstraint": ">=2.40.0,<3.0.0",
+   "versionCorroboration": "https://github.com/cli/cli/releases/tag/v2.65.0",
+   "versionProvenance": "Operator-asserted gh 2.65.0, confirmed, and now CORROBORATED against the upstream release record: cli/cli tag v2.65.0, published 2025-01-06 (versionCorroboration). The assertion and the release date no longer rest on the operator alone. No captured `gh --version` exists, so the tier stays OPERATOR-ASSERTED-CONFIRMED rather than OBSERVED-CAPTURE \u2014 corroborating that a version EXISTS and was released when claimed is not the same as watching the binary that produced this capture print its own version. The gh version gate stays ADVISORY; the SHAPE is what is validated.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "gh.environment.v1": {
+   "captureFile": "env_one.json",
+   "captureSha256": "382be29617fb314a39b3bb1348866f478c174b8ce9a1516231f2e19f05cd7dce",
+   "command": "gh api repos/{owner}/{repo}/environments/{env}",
+   "note": "NEGATIVE fixture: protection_rules [], deployment_branch_policy null, can_admins_bypass true => NOT a qualifying trust boundary (AUT_PRINCIPAL_NOT_DISTINCT). Captured 2026-08-05 from gh v2.65.0 against the private repo samerzakaria/ClearReq. PROVENANCE.txt predates these four files and still says 'gh api captures NOT included'; they were added afterwards and arrived UTF-16LE+BOM from PowerShell (see captures/raw/). The gh version is asserted by the capture operator, not by a captured 'gh --version' - so the gh version gate is advisory and the SHAPE is what is validated.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_environment.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-01-06",
+   "toolVersion": "v2.65.0",
+   "versionConstraint": ">=2.40.0,<3.0.0",
+   "versionCorroboration": "https://github.com/cli/cli/releases/tag/v2.65.0",
+   "versionProvenance": "Operator-asserted gh 2.65.0, confirmed, and now CORROBORATED against the upstream release record: cli/cli tag v2.65.0, published 2025-01-06 (versionCorroboration). The assertion and the release date no longer rest on the operator alone. No captured `gh --version` exists, so the tier stays OPERATOR-ASSERTED-CONFIRMED rather than OBSERVED-CAPTURE \u2014 corroborating that a version EXISTS and was released when claimed is not the same as watching the binary that produced this capture print its own version. The gh version gate stays ADVISORY; the SHAPE is what is validated.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "gh.repo.v1": {
+   "captureFile": "repo.json",
+   "captureSha256": "e9e4dc32b82d3f1a2fec285225928a825da23cfe1d0ff90d8cdb06a15e6de1a2",
+   "command": "gh api repos/{owner}/{repo}",
+   "note": "84-key private-repo record, owner type User. Identity ANCHOR only. Captured 2026-08-05 from gh v2.65.0 against the private repo samerzakaria/ClearReq. PROVENANCE.txt predates these four files and still says 'gh api captures NOT included'; they were added afterwards and arrived UTF-16LE+BOM from PowerShell (see captures/raw/). The gh version is asserted by the capture operator, not by a captured 'gh --version' - so the gh version gate is advisory and the SHAPE is what is validated.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_repo.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-01-06",
+   "toolVersion": "v2.65.0",
+   "versionConstraint": ">=2.40.0,<3.0.0",
+   "versionCorroboration": "https://github.com/cli/cli/releases/tag/v2.65.0",
+   "versionProvenance": "Operator-asserted gh 2.65.0, confirmed, and now CORROBORATED against the upstream release record: cli/cli tag v2.65.0, published 2025-01-06 (versionCorroboration). The assertion and the release date no longer rest on the operator alone. No captured `gh --version` exists, so the tier stays OPERATOR-ASSERTED-CONFIRMED rather than OBSERVED-CAPTURE \u2014 corroborating that a version EXISTS and was released when claimed is not the same as watching the binary that produced this capture print its own version. The gh version gate stays ADVISORY; the SHAPE is what is validated.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "gh.run.approvals.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "gh_run_approvals_selfok.json",
+     "captureSha256": "6423ba20614312497226af8cb5779b391b48cca10b9a5bbac27fbe026a5a36e6",
+     "note": "Approval by the run's own actor - the adversarial half of the pair."
+    }
+   ],
+   "captureFile": "gh_run_approvals.json",
+   "captureSha256": "928d071c745df9984cf17737b8ef96fdc56c9865815403d444a65fc10b1ab4e5",
+   "command": "gh api repos/{owner}/{repo}/actions/runs/{run_id}/approvals",
+   "note": "The approval records, and the reason this round exists. gh_run_approvals.json records state=approved by TEST2121313, an account DISTINCT from the run's actor, on the protected environment. gh_run_approvals_selfok.json records state=approved by samerzakaria - the run's OWN actor - on an environment configured with prevent_self_review=false. The contrast is real infrastructure behaviour, not a fixture: GitHub refused the actor's own approval on `production` (pending_deployments reported current_user_can_approve=false) and permitted it on `selfok`. `notSelfApproved` can now be exercised against a passing and a failing REAL record.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_run_approvals.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-10-01",
+   "toolVersion": "v2.81.0",
+   "versionConstraint": ">=2.60.0,<3.0.0",
+   "versionProvenance": "gh_version_2.81.0.txt IS the producing binary printing its own version: it was captured by capture-evidence.sh in the same session, from the same gh process tree, as the responses pinned here. Observed, not asserted, which is why this is OBSERVED-CAPTURE and carries no versionCorroboration link.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "gh.run.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "gh_run_selfok.json",
+     "captureSha256": "7506c77a6bd4bcdc2e1066d47ff2656950bc7c595ae94756d3a48917f8d0da0a",
+     "note": "The self-approved counterpart: run 31232066405 to the `selfok` environment."
+    }
+   ],
+   "captureFile": "gh_run.json",
+   "captureSha256": "ad27b4dbc1ed83015c8a0053b240171bec23ef865e4c55cd704e4d80c0406909",
+   "command": "gh api repos/{owner}/{repo}/actions/runs/{run_id}",
+   "note": "Workflow-run records from a REAL gated deployment, captured 2026-08-08 from the public repository samerzakaria/shipgate-target-demo. Primary: run 31231928826, deployed to the protected `production` environment and approved by a SECOND GitHub account. Beside it, run 31232066405 to the deliberately weak `selfok` environment, approved by the run's own actor. Pinning both is the point: the same shape carrying a properly approved run and a self-approved one lets enforcement.judge_deployment be exercised in BOTH directions against real bytes rather than one direction against real bytes and the other against an imagined edit.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "gh_run.schema.json",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2025-10-01",
+   "toolVersion": "v2.81.0",
+   "versionConstraint": ">=2.60.0,<3.0.0",
+   "versionProvenance": "gh_version_2.81.0.txt IS the producing binary printing its own version: it was captured by capture-evidence.sh in the same session, from the same gh process tree, as the responses pinned here. Observed, not asserted, which is why this is OBSERVED-CAPTURE and carries no versionCorroboration link.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "gh.version.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "gh_version_2.90.0.txt",
+     "captureSha256": "3a76441fcd44f3ee4366d8aaeff9468105d8fe60a528306fb258d24b5e4a6c1a",
+     "note": "v4.2.1: gh 2.90.0 printing its own version (source-built, version stamped)."
+    },
+    {
+     "captureFile": "gh_version_2.81.0.txt",
+     "captureSha256": "49b3aaa1e58ec5aa9aa376b824dde72dce7a0b7dbd5876926e1d79a8b5dc3685",
+     "note": "v4.2.2 field round: gh 2.81.0 printing its own version, the observed anchor for the four deployment-evidence captures."
+    }
+   ],
+   "captureFile": "gh_version.txt",
+   "captureSha256": "12d3a84351274b3964544be1b210e8d12f848a323e275f6e100efcc86187a661",
+   "command": "gh --version",
+   "note": "The gh binary printing its own version - the observed anchor for the v4.2 attestation captures. Text, not JSON; parsers/ghattest.parse_version reads the first line only. Captured 2026-08-07 on linux-x86_64 from the official GitHub CLI apt package.",
+   "provenance": "REAL_CAPTURE",
+   "status": "VALIDATED",
+   "tool": "gh",
+   "toolReleaseDate": "2026-07-31",
+   "toolVersion": "v2.97.0",
+   "versionConstraint": ">=2.60.0,<3.0.0",
+   "versionProvenance": "gh_version.txt IS this capture: the tool printed its own version.",
+   "versionTier": "OBSERVED-CAPTURE"
+  },
+  "oidc.github.claims.v1": {
+   "bindingNote": "SHAPE only. Two things this capture does NOT establish. (1) SIGNATURE: the claim set is a decoded JWT payload and this kit does not verify JWT signatures \u2014 that needs GitHub's JWKS and asymmetric crypto, both outside the bounded scope \u2014 so the claims remain CONTEXT, never identity. (2) BINDING: repository/actor strings were sanitized to OWNER/REPO, so a repository binding check against any real decision subject will and should disagree. The numeric ids (repository_owner_id 228308318) and the commit shas were NOT sanitized and do still agree with the certificate.",
+   "bindingValidated": false,
+   "captureFile": "oidc_claims.json",
+   "captureSha256": "5242d22b9ef612348ec9e718407d873bc6bf090981de343a9404d63a3c2b9717",
+   "command": "curl -H \"Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN\" \"$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sigstore\"  (claim set only; the token itself is a bearer credential and is never stored)",
+   "cosignProvenance": "sigstore/cosign-installer@v3",
+   "ghProvenance": "ambient runner install",
+   "note": "Captured 2026-08-05 from a THROWAWAY PUBLIC repository, since deleted; the identities are TEST identities. Name strings were sanitized to OWNER/REPO by the capture author. 31 claims, aud=sigstore, event workflow_dispatch, runner_environment=github-hosted, repository_visibility=public. The token's 5-minute exp window is long past, so freshness checks against a real clock correctly refuse it; the accept path is exercised against a reference clock.",
+   "oidcIssuer": "token.actions.githubusercontent.com",
+   "producedBy": "curl against the Actions token endpoint on the runner",
+   "provenance": "REAL_CAPTURE",
+   "runnerEnvironment": "GitHub-hosted",
+   "schemaFile": "oidc_github_claims.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "GitHub Actions OIDC",
+   "toolVersion": "RUNNER-RESOLVED",
+   "versionConstraint": null,
+   "versionProvenance": "There is no client-tool version to state: the claim set was fetched from the Actions token endpoint inside a GitHub-hosted runner in a throwaway public repo, since deleted. The job's cosign came from sigstore/cosign-installer@v3 and its gh was the runner's ambient install; neither pins a version, so no version constraint applies to anything produced by that job. Was UNSTATED-adjacent (the field held the ISSUER host, not a version); it is now RUNNER-RESOLVED, which is the true state.",
+   "versionTier": "RUNNER-RESOLVED"
+  },
+  "rekor.cli.get.v1": {
+   "captureFile": "rekor_get_logindex.json",
+   "captureSha256": "146329ad7d41827e324ff6d451dbfee5fc45a836e105ed4d5cc942ba216d276a",
+   "command": "rekor-cli get --log-index 1000000 --format json",
+   "note": "CLI shape. Carries NO Verification/InclusionProof by default - proof-absence is DETECTED and the REST shape is then required. rekor-cli version is operator-asserted (no 'rekor-cli version --format json' capture exists).",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "rekor_cli_get.schema.json",
+   "status": "VALIDATED",
+   "tool": "rekor-cli",
+   "toolVersion": "v1.5.3",
+   "versionConstraint": ">=1.5.0,<2.0.0",
+   "versionProvenance": "Operator-asserted rekor-cli v1.5.3, now confirmed by the capture author in captures/raw/PROVENANCE_v03.txt. No `rekor-cli version` capture exists, so the range is applied on an asserted-and-confirmed basis; the SHAPE is what is validated.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "rekor.cli.loginfo.v1": {
+   "captureFile": "rekor_loginfo.json",
+   "captureSha256": "52e39f4b22535ea3565900ecdf3332c0e8b99ac4c7b6921b83a74ccc36d0e3d5",
+   "command": "rekor-cli loginfo --format json",
+   "note": "Signed tree head summary; TreeID 1193050959916656506 matches the bundle checkpoint origin.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "rekor_cli_loginfo.schema.json",
+   "status": "VALIDATED",
+   "tool": "rekor-cli",
+   "toolVersion": "v1.5.3",
+   "versionConstraint": ">=1.5.0,<2.0.0",
+   "versionProvenance": "Operator-asserted rekor-cli v1.5.3, now confirmed by the capture author in captures/raw/PROVENANCE_v03.txt. No `rekor-cli version` capture exists, so the range is applied on an asserted-and-confirmed basis; the SHAPE is what is validated.",
+   "versionTier": "OPERATOR-ASSERTED-CONFIRMED"
+  },
+  "rekor.rest.entry.fresh.v1": {
+   "additionalCaptures": [
+    {
+     "captureFile": "rekor_loginfo_fresh.json",
+     "captureSha256": "221a25f45de7c7172edb2aa652fd42a3fab6ae0d8ce814f51563bd41a1c7c838",
+     "command": "GET https://rekor.sigstore.dev/api/v1/log",
+     "note": "the signed tree head at capture time, parsed by rekor.rest.loginfo.v1. REQUIRED to check the shard offset: this entry's global logIndex minus its shard-local inclusionProof.logIndex must equal the sum of the inactive shards' tree sizes."
+    }
+   ],
+   "bindingNote": "SHAPE validated. This is the FIRST proof-carrying REST entry in the corpus that is BOUND to a bundle in the corpus: logIndex 2354787700 and integratedTime 1785990048 both match bundle_v03.json's tlog entry, and the entry's `body` is BYTE-IDENTICAL to that bundle's canonicalizedBody. bindingValidated stays false all the same, and the distinction matters: it binds an entry to a BUNDLE, not a signed identity to a DECISION SUBJECT. The bundle it binds to is KEYED and carries no identity, so this closes the no-fresh-bound-entry gap without closing the identity gap. It is also perishable \u2014 integratedTime 1785990048 was ~29 minutes old at registration and ages past the 3600s default window about an hour later, so selfcheck exercises the freshness verifier against a REFERENCE clock (accept at +60s, refuse at +3601s, refuse at -60s) and never against the wall clock, which would make the suite pass today and fail tomorrow.",
+   "bindingValidated": false,
+   "captureFile": "rekor_rest_entry_fresh.json",
+   "captureSha256": "5b4e52df6e0ce0151ff76f1c7ee063bd24c2e7a1c0f8ba8106eac7a454b4dedf",
+   "command": "GET https://rekor.sigstore.dev/api/v1/log/entries?logIndex=2354787700",
+   "note": "The RFC 6962 inclusion proof recomputes rootHash f2a13ca005\u2026 at treeSize 2232891025 \u2014 a LATER tree head than the bundle's own embedded proof (2232883522), which is exactly what you expect when the entry is re-fetched after more leaves have been appended: two different consistent views of the same leaf. The 2021 entry (rekor.rest.entry.v1, logIndex 1000000) is KEPT as the permanent NEGATIVE freshness fixture. SHARD OFFSET: global logIndex 2354787700 - shard-local proof logIndex 2232883438 = 121904262 = 4163431 + 117740831, the two inactive shards in rekor_loginfo_fresh.json. Captured 2026-08-06 in an ephemeral Claude sandbox against the PUBLIC Sigstore/Rekor infrastructure with a freshly downloaded cosign v3.1.3 and a throwaway signing key generated in-sandbox (the private key is NOT in the corpus; cosign.pub is, because verification needs it and it is by definition public). Nothing required sanitising: the signed blob is the literal string \"ship-gate v4.0 capture blob\" and the Rekor entries are public log data.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "rekor_rest_entry.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "Rekor REST",
+   "toolVersion": "api/v1",
+   "versionConstraint": null,
+   "versionProvenance": "No client tool: the document rekor.sigstore.dev returned over api/v1, fetched minutes after the signature was made.",
+   "versionTier": "SERVER-API"
+  },
+  "rekor.rest.entry.v1": {
+   "captureFile": "rekor_rest_entry.json",
+   "captureSha256": "9f097f38361034e87f3ed55b252c7ab02297dfe5350e2e540b1e8be9062b5d3d",
+   "command": "GET https://rekor.sigstore.dev/api/v1/log/entries?logIndex=1000000",
+   "note": "FRESHNESS + PROOF source. integratedTime is the freshness clock; the inclusion proof verifies to rootHash 4d006aa4... at treeSize 4163431 and the checkpoint key hint c0d23d6a matches logID[:8].",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "rekor_rest_entry.schema.json",
+   "status": "VALIDATED",
+   "tool": "Rekor REST",
+   "toolVersion": "api/v1",
+   "versionConstraint": null,
+   "versionProvenance": "No client tool: this is the document rekor.sigstore.dev returned over api/v1. Nothing to version-gate; the api/v1 path and the capture digest are the pins.",
+   "versionTier": "SERVER-API"
+  },
+  "rekor.rest.loginfo.v1": {
+   "bindingValidated": false,
+   "captureFile": "rekor_loginfo_fresh.json",
+   "captureSha256": "221a25f45de7c7172edb2aa652fd42a3fab6ae0d8ce814f51563bd41a1c7c838",
+   "command": "GET https://rekor.sigstore.dev/api/v1/log",
+   "note": "Registered because the shard-offset check needs it and this kit does not let a parser succeed on an unregistered shape. Active tree 1193050959916656506 at size 2232891295, plus two sealed inactive shards (4163431 and 117740831 leaves). Distinct from rekor.cli.loginfo.v1, which is the rekor-cli rendering (ActiveTreeSize / TotalTreeSize / RootHash / TreeID) and does NOT enumerate the inactive shards \u2014 which is why the CLI shape cannot support this check. Captured 2026-08-06 in an ephemeral Claude sandbox against the PUBLIC Sigstore/Rekor infrastructure with a freshly downloaded cosign v3.1.3 and a throwaway signing key generated in-sandbox (the private key is NOT in the corpus; cosign.pub is, because verification needs it and it is by definition public). Nothing required sanitising: the signed blob is the literal string \"ship-gate v4.0 capture blob\" and the Rekor entries are public log data.",
+   "provenance": "REAL_CAPTURE",
+   "schemaFile": "rekor_rest_loginfo.schema.json",
+   "shapeValidated": true,
+   "status": "VALIDATED",
+   "tool": "Rekor REST",
+   "toolVersion": "api/v1",
+   "versionConstraint": null,
+   "versionProvenance": "No client tool; api/v1 document from rekor.sigstore.dev.",
+   "versionTier": "SERVER-API"
+  }
+ },
+ "statusVocabulary": {
+  "BLOCKED": "no real capture exists (or its digest no longer matches); the parser recognises the shape and REFUSES it with AUT_OUTPUT_SHAPE_UNKNOWN",
+  "VALIDATED": "the parse contract was checked against a real capture whose digest is pinned below; the parser may succeed on this shape. Read shapeValidated/bindingValidated: a VALIDATED shape means the SHAPE was seen, NOT that the identity inside it binds to anything",
+  "bindingValidated": "false on every current entry, including the 2026-08-06 round. No capture in this corpus proves a binding between a signed IDENTITY and a real DECISION SUBJECT: the sanitized fixtures deliberately cannot, and the unsanitized ones (both keyed bundles) sign a blob that is not a ship-gate decision and carry no certificate at all. rekor_rest_entry_fresh.json binds an ENTRY to a BUNDLE, which is a real and new binding but not that one. Binding is exercised in selfcheck against a decision built to match the captured digest, and enforced at runtime by cosign.check_binding / cosign.check_certificate_identity."
+ },
+ "unblockProcedure": "1. Produce the output in the real environment. 2. Save it byte-exact under captures/raw/ and a UTF-8 copy under captures/normalized/. 3. Add captureFile + captureSha256 here, set status VALIDATED and provenance REAL_CAPTURE. 4. Re-run python3 -m shipgate.authority.selfcheck. Never hand-author a capture.",
+ "versionTiers": {
+  "NOT-CAPTURED": "The shape is BLOCKED and no output of it exists, so there is no producing version to state. Also not UNSTATED: there is no capture whose provenance could have been omitted.",
+  "OBSERVED-CAPTURE": "The producing tool printed its own version and that output is IN the corpus. Strongest tier. cosign v3.1.3 (cosign_version_3_1_3.json) for the 2026-08-06 v0.3 round; cosign v3.1.2 (cosign_version.json) for the original round.",
+  "OPERATOR-ASSERTED-CONFIRMED": "No `--version` capture exists for this tool, but the operator stated the version and the capture author has since confirmed it. cosign v3.1.2 and rekor-cli v1.5.3 for the original cosign/rekor corpus; gh 2.65.0 for the gh repo/environment/secrets captures. The gh entries additionally carry `versionCorroboration`, a link to the upstream release record (cli/cli tag v2.65.0, published 2025-01-06), so the version and its date are checkable against something outside this repository. That is corroboration of the CLAIM, not observation of the producing binary, which is why it does not promote the tier to OBSERVED-CAPTURE. The gate MAY apply the range; what is VALIDATED is still the shape.",
+  "RUNNER-RESOLVED": "We know EXACTLY how the tool was installed, and that mechanism does not pin a version. The three trust-shape captures came from a GitHub Actions job in a throwaway public repository, since deleted: cosign was installed by sigstore/cosign-installer@v3, which resolves to whatever the latest v3.x was at job time, and gh was the runner's ambient install. RUNNER-RESOLVED IS NOT UNSTATED. \"we know the install mechanism and it does not pin\" is a different \u2014 and better \u2014 epistemic state than \"nobody told us\". The version constraint is null: inventing a plausible number to make this column look uniform is precisely the fabrication this registry exists to prevent.",
+  "SERVER-API": "There is no client tool to version. The Rekor REST shapes are documents returned by rekor.sigstore.dev over api/v1; what is pinned is the API version and the capture digest. Not a tool-version claim at all, so no range applies.",
+  "UNSTATED": "RETIRED as of 2026-08-06. It formerly covered cosign.bundle.keyless.legacy.v1 and gh.environment.protected.v1; both are now RUNNER-RESOLVED, which says the same 'no version gate applies' with the reason attached. No entry in this manifest uses UNSTATED, and selfcheck asserts that.",
+  "purpose": "Every shape names the tool version that produced ITS capture, and the EPISTEMIC STATE of that claim. There are four distinct situations in this corpus, not one, and flattening them into a single column would be a lie of uniformity. `versionTier` is the state; `versionConstraint` is the range the gate may enforce, and it is null wherever no version can honestly be pinned."
+ }
+}

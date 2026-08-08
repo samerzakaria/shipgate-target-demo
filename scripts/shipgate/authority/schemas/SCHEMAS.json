@@ -1,0 +1,2025 @@
+{
+ "note": "Every output-shape schema in one file. The `schemaFile` key in SHAPES.json is a key into `schemas` below, not a path on disk. Consolidated because a Claude Skill package may hold at most 200 files and sixteen loose schemas spent sixteen of them; the schema bodies are unchanged, byte-for-byte equivalent as parsed JSON.",
+ "schema": "shipgate.authority.schemas/1",
+ "schemas": {
+  "cosign_bundle_keyed.schema.json": {
+   "$id": "shipgate.authority/cosign.bundle.keyed.v0_3",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "The KEYED bundle shape: verificationMaterial.publicKey (a key hint), NOT a Fulcio certificate chain. kindVersion.kind is pinned to the ONLY kind present in a real capture (hashedrekord); a dsse/intoto bundle is a different, unvalidated contract and is refused. Captured from cosign v3.1.2.",
+   "properties": {
+    "mediaType": {
+     "const": "application/vnd.dev.sigstore.bundle.v0.3+json",
+     "type": "string"
+    },
+    "messageSignature": {
+     "additionalProperties": false,
+     "properties": {
+      "messageDigest": {
+       "additionalProperties": false,
+       "properties": {
+        "algorithm": {
+         "const": "SHA2_256",
+         "type": "string"
+        },
+        "digest": {
+         "minLength": 1,
+         "type": "string"
+        }
+       },
+       "required": [
+        "algorithm",
+        "digest"
+       ],
+       "type": "object"
+      },
+      "signature": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "messageDigest",
+      "signature"
+     ],
+     "type": "object"
+    },
+    "verificationMaterial": {
+     "additionalProperties": false,
+     "properties": {
+      "publicKey": {
+       "additionalProperties": false,
+       "properties": {
+        "hint": {
+         "minLength": 1,
+         "type": "string"
+        }
+       },
+       "required": [
+        "hint"
+       ],
+       "type": "object"
+      },
+      "timestampVerificationData": {
+       "additionalProperties": false,
+       "properties": {
+        "rfc3161Timestamps": {
+         "items": {
+          "additionalProperties": false,
+          "properties": {
+           "signedTimestamp": {
+            "minLength": 1,
+            "type": "string"
+           }
+          },
+          "required": [
+           "signedTimestamp"
+          ],
+          "type": "object"
+         },
+         "maxItems": 8,
+         "minItems": 1,
+         "type": "array"
+        }
+       },
+       "required": [
+        "rfc3161Timestamps"
+       ],
+       "type": "object"
+      },
+      "tlogEntries": {
+       "items": {
+        "additionalProperties": false,
+        "properties": {
+         "canonicalizedBody": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "inclusionPromise": {
+          "additionalProperties": false,
+          "properties": {
+           "signedEntryTimestamp": {
+            "minLength": 1,
+            "type": "string"
+           }
+          },
+          "required": [
+           "signedEntryTimestamp"
+          ],
+          "type": "object"
+         },
+         "inclusionProof": {
+          "additionalProperties": false,
+          "properties": {
+           "checkpoint": {
+            "additionalProperties": false,
+            "properties": {
+             "envelope": {
+              "minLength": 1,
+              "type": "string"
+             }
+            },
+            "required": [
+             "envelope"
+            ],
+            "type": "object"
+           },
+           "hashes": {
+            "items": {
+             "minLength": 1,
+             "type": "string"
+            },
+            "maxItems": 64,
+            "minItems": 1,
+            "type": "array"
+           },
+           "logIndex": {
+            "pattern": "^[0-9]+$",
+            "type": "string"
+           },
+           "rootHash": {
+            "minLength": 1,
+            "type": "string"
+           },
+           "treeSize": {
+            "pattern": "^[0-9]+$",
+            "type": "string"
+           }
+          },
+          "required": [
+           "logIndex",
+           "rootHash",
+           "treeSize",
+           "hashes",
+           "checkpoint"
+          ],
+          "type": "object"
+         },
+         "integratedTime": {
+          "pattern": "^[0-9]+$",
+          "type": "string"
+         },
+         "kindVersion": {
+          "additionalProperties": false,
+          "properties": {
+           "kind": {
+            "const": "hashedrekord",
+            "type": "string"
+           },
+           "version": {
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+            "type": "string"
+           }
+          },
+          "required": [
+           "kind",
+           "version"
+          ],
+          "type": "object"
+         },
+         "logId": {
+          "additionalProperties": false,
+          "properties": {
+           "keyId": {
+            "minLength": 1,
+            "type": "string"
+           }
+          },
+          "required": [
+           "keyId"
+          ],
+          "type": "object"
+         },
+         "logIndex": {
+          "pattern": "^[0-9]+$",
+          "type": "string"
+         }
+        },
+        "required": [
+         "logIndex",
+         "logId",
+         "kindVersion",
+         "integratedTime",
+         "inclusionProof",
+         "canonicalizedBody"
+        ],
+        "type": "object"
+       },
+       "maxItems": 8,
+       "minItems": 1,
+       "type": "array"
+      }
+     },
+     "required": [
+      "publicKey",
+      "tlogEntries"
+     ],
+     "type": "object"
+    }
+   },
+   "required": [
+    "mediaType",
+    "verificationMaterial",
+    "messageSignature"
+   ],
+   "title": "cosign sign-blob --bundle (local key, sigstore bundle v0.3)",
+   "type": "object"
+  },
+  "cosign_bundle_keyless.schema.json": {
+   "$id": "shipgate.authority/cosign.bundle.keyless.v0_3",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": true,
+   "description": "DECLARED, NOT VALIDATED. The keyless bundle replaces verificationMaterial.publicKey with a Fulcio certificate (or x509CertificateChain) carrying the OIDC identity in a SAN plus the 1.3.6.1.4.1.57264.* GitHub Actions extensions. Producing one needs an OIDC token, which the capture environment did not have, so NO real capture exists and this shape is BLOCKED: the parser recognises it and refuses with AUT_OUTPUT_SHAPE_UNKNOWN. The property set below is the branch the parser implements; it MUST NOT be treated as a validated contract until a real capture replaces it.",
+   "properties": {
+    "mediaType": {
+     "const": "application/vnd.dev.sigstore.bundle.v0.3+json",
+     "type": "string"
+    },
+    "messageSignature": {
+     "additionalProperties": true,
+     "type": "object"
+    },
+    "verificationMaterial": {
+     "additionalProperties": true,
+     "properties": {
+      "certificate": {
+       "additionalProperties": true,
+       "properties": {
+        "rawBytes": {
+         "minLength": 1,
+         "type": "string"
+        }
+       },
+       "required": [
+        "rawBytes"
+       ],
+       "type": "object"
+      },
+      "tlogEntries": {
+       "items": {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       "minItems": 1,
+       "type": "array"
+      },
+      "x509CertificateChain": {
+       "additionalProperties": true,
+       "properties": {
+        "certificates": {
+         "items": {
+          "additionalProperties": true,
+          "properties": {
+           "rawBytes": {
+            "minLength": 1,
+            "type": "string"
+           }
+          },
+          "required": [
+           "rawBytes"
+          ],
+          "type": "object"
+         },
+         "minItems": 1,
+         "type": "array"
+        }
+       },
+       "required": [
+        "certificates"
+       ],
+       "type": "object"
+      }
+     },
+     "required": [
+      "tlogEntries"
+     ],
+     "type": "object"
+    }
+   },
+   "required": [
+    "mediaType",
+    "verificationMaterial",
+    "messageSignature"
+   ],
+   "title": "cosign sign-blob --bundle (KEYLESS / Fulcio + OIDC)  [BLOCKED - NOT CAPTURED]",
+   "type": "object"
+  },
+  "cosign_bundle_keyless_legacy.schema.json": {
+   "$id": "shipgate.authority/cosign.bundle.keyless.legacy.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "The flat {base64Signature, cert, rekorBundle} triple cosign writes for --bundle. This is what a real keyless capture turned out to be: NOT a keyless flavour of the sigstore bundle v0.3 (there is no mediaType and no verificationMaterial), but a different, older serialisation. `cert` is base64 of a single PEM CERTIFICATE \u2014 a Fulcio ephemeral leaf whose extensions (1.3.6.1.4.1.57264.1.*) carry the GitHub Actions identity. `rekorBundle` carries only a SignedEntryTimestamp: there is NO inclusion proof in this shape, so proving inclusion still requires the Rekor REST entry. Captured 2026-08-05 from a throwaway public repository; producing cosign version NOT stated by the capture author.",
+   "properties": {
+    "base64Signature": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "cert": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "chain": {
+     "type": "string"
+    },
+    "rekorBundle": {
+     "additionalProperties": false,
+     "properties": {
+      "Payload": {
+       "additionalProperties": false,
+       "properties": {
+        "body": {
+         "minLength": 1,
+         "type": "string"
+        },
+        "integratedTime": {
+         "minimum": 1,
+         "type": "integer"
+        },
+        "logID": {
+         "pattern": "^[0-9a-f]{64}$",
+         "type": "string"
+        },
+        "logIndex": {
+         "minimum": 0,
+         "type": "integer"
+        }
+       },
+       "required": [
+        "body",
+        "integratedTime",
+        "logIndex",
+        "logID"
+       ],
+       "type": "object"
+      },
+      "SignedEntryTimestamp": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "SignedEntryTimestamp",
+      "Payload"
+     ],
+     "type": "object"
+    }
+   },
+   "required": [
+    "base64Signature",
+    "cert",
+    "rekorBundle"
+   ],
+   "title": "cosign sign-blob --bundle, KEYLESS (legacy cosign bundle serialisation)",
+   "type": "object"
+  },
+  "cosign_verify_blob_text.schema.json": {
+   "$id": "shipgate.authority/cosign.verifyblob.text.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "cosign verify-blob emits no machine-readable output, so the parse target is the normalised triple {exitCode, stdout, stderr}. Only the two captured texts are recognised; ANY other text is AUT_OUTPUT_SHAPE_UNKNOWN and is never treated as success. Captured from cosign v3.1.2.",
+   "properties": {
+    "exitCode": {
+     "maximum": 255,
+     "minimum": 0,
+     "type": "integer"
+    },
+    "stderr": {
+     "type": "string"
+    },
+    "stdout": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "exitCode",
+    "stdout",
+    "stderr"
+   ],
+   "title": "cosign verify-blob (NO JSON MODE) - exit code + exact stdout/stderr",
+   "type": "object"
+  },
+  "cosign_version.schema.json": {
+   "$id": "shipgate.authority/cosign.version.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "Machine-readable cosign version block. Captured from cosign v3.1.2.",
+   "properties": {
+    "buildDate": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+     "type": "string"
+    },
+    "compiler": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "gitCommit": {
+     "pattern": "^[0-9a-f]{7,40}$",
+     "type": "string"
+    },
+    "gitTreeState": {
+     "enum": [
+      "clean",
+      "dirty"
+     ],
+     "type": "string"
+    },
+    "gitVersion": {
+     "pattern": "^v?[0-9]+\\.[0-9]+\\.[0-9]+",
+     "type": "string"
+    },
+    "goVersion": {
+     "pattern": "^go[0-9]",
+     "type": "string"
+    },
+    "platform": {
+     "pattern": "^[a-z0-9]+/[a-z0-9]+$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "gitVersion",
+    "gitCommit",
+    "gitTreeState",
+    "buildDate",
+    "goVersion",
+    "compiler",
+    "platform"
+   ],
+   "title": "cosign version --json",
+   "type": "object"
+  },
+  "gh_attestation_verify.schema.json": {
+   "$id": "shipgate.authority/gh.attestation.verify.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "description": "The machine output of GitHub's own attestation verifier. additionalProperties is TRUE at every level except the subject digest map - gh adds fields over time and none of the additions participates in the trust decision - while the identity-bearing subset below is required and strictly typed. The digest map IS closed: an algorithm this kit does not recognise must refuse, not pass unexamined. Validated against the real gh v2.97.0 capture gh_attestation_verify_ok.json and the real gh v2.90.0 capture gh_attestation_verify_ok_2.90.0.json. Timestamps accept any RFC 3339 instant with an explicit zone (Z or numeric offset), fractional seconds optional - a v4.2.2 fix: gh formats the tlog time in the machine's LOCAL zone (observed on v2.90.0 and v2.97.0 under TZ=Asia/Riyadh, real capture gh_attestation_verify_ok_2.90.0_tz+03.json), so a UTC-only pattern refused valid verifications on any non-UTC machine. ghexec also pins TZ=UTC on the subprocess for determinism.",
+   "items": {
+    "additionalProperties": true,
+    "properties": {
+     "verificationResult": {
+      "additionalProperties": true,
+      "properties": {
+       "signature": {
+        "additionalProperties": true,
+        "properties": {
+         "certificate": {
+          "additionalProperties": true,
+          "properties": {
+           "buildSignerURI": {
+            "minLength": 1,
+            "type": "string"
+           },
+           "githubWorkflowRef": {
+            "minLength": 1,
+            "type": "string"
+           },
+           "githubWorkflowRepository": {
+            "pattern": "^[^/]+/[^/]+$",
+            "type": "string"
+           },
+           "githubWorkflowSHA": {
+            "pattern": "^[0-9a-fA-F]{40}$",
+            "type": "string"
+           },
+           "issuer": {
+            "pattern": "^https://",
+            "type": "string"
+           },
+           "runInvocationURI": {
+            "pattern": "^https://github\\.com/",
+            "type": "string"
+           },
+           "runnerEnvironment": {
+            "minLength": 1,
+            "type": "string"
+           },
+           "sourceRepositoryDigest": {
+            "pattern": "^[0-9a-fA-F]{40}$",
+            "type": "string"
+           },
+           "sourceRepositoryIdentifier": {
+            "pattern": "^[0-9]+$",
+            "type": "string"
+           },
+           "sourceRepositoryOwnerIdentifier": {
+            "pattern": "^[0-9]+$",
+            "type": "string"
+           },
+           "sourceRepositoryURI": {
+            "pattern": "^https://",
+            "type": "string"
+           },
+           "subjectAlternativeName": {
+            "pattern": "^https://",
+            "type": "string"
+           }
+          },
+          "required": [
+           "subjectAlternativeName",
+           "issuer",
+           "buildSignerURI",
+           "githubWorkflowRepository",
+           "githubWorkflowSHA",
+           "githubWorkflowRef",
+           "sourceRepositoryURI",
+           "sourceRepositoryDigest",
+           "sourceRepositoryIdentifier",
+           "sourceRepositoryOwnerIdentifier",
+           "runnerEnvironment",
+           "runInvocationURI"
+          ],
+          "type": "object"
+         }
+        },
+        "required": [
+         "certificate"
+        ],
+        "type": "object"
+       },
+       "statement": {
+        "additionalProperties": true,
+        "properties": {
+         "_type": {
+          "const": "https://in-toto.io/Statement/v1"
+         },
+         "predicateType": {
+          "minLength": 1,
+          "type": "string"
+         },
+         "subject": {
+          "items": {
+           "additionalProperties": true,
+           "properties": {
+            "digest": {
+             "additionalProperties": false,
+             "minProperties": 1,
+             "patternProperties": {
+              "^sha256$": {
+               "pattern": "^[0-9a-fA-F]{64}$",
+               "type": "string"
+              },
+              "^sha512$": {
+               "pattern": "^[0-9a-fA-F]{128}$",
+               "type": "string"
+              }
+             },
+             "type": "object"
+            },
+            "name": {
+             "type": "string"
+            }
+           },
+           "required": [
+            "digest"
+           ],
+           "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+         }
+        },
+        "required": [
+         "_type",
+         "predicateType",
+         "subject"
+        ],
+        "type": "object"
+       },
+       "verifiedTimestamps": {
+        "items": {
+         "additionalProperties": true,
+         "properties": {
+          "timestamp": {
+           "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,9})?(Z|[+-][0-9]{2}:[0-9]{2})$",
+           "type": "string"
+          },
+          "type": {
+           "minLength": 1,
+           "type": "string"
+          },
+          "uri": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "type",
+          "timestamp"
+         ],
+         "type": "object"
+        },
+        "minItems": 1,
+        "type": "array"
+       }
+      },
+      "required": [
+       "signature",
+       "statement",
+       "verifiedTimestamps"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "verificationResult"
+    ],
+    "type": "object"
+   },
+   "minItems": 1,
+   "title": "gh attestation verify --format json",
+   "type": "array"
+  },
+  "gh_deployment_statuses.schema.json": {
+   "$id": "shipgate.authority/gh.deployment.statuses.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "description": "CLOSED item shape. Status transitions, newest first. `state` on the most recent is the terminal state; `log_url`/`target_url` name the run, which is what binds a status to THIS run rather than to the environment in general. Captured 2026-08-08.",
+   "items": {
+    "$id": "shipgate.authority/gh.deployment.statuses.v1.item",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "description": "one deployment status record",
+    "properties": {
+     "created_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+      "type": "string"
+     },
+     "creator": {
+      "additionalProperties": true,
+      "properties": {
+       "id": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "login": {
+        "minLength": 1,
+        "type": "string"
+       }
+      },
+      "required": [
+       "login",
+       "id"
+      ],
+      "type": "object"
+     },
+     "deployment_url": {
+      "pattern": "^https://api\\.github\\.com/",
+      "type": "string"
+     },
+     "description": {
+      "type": "string"
+     },
+     "environment": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "environment_url": {
+      "type": "string"
+     },
+     "id": {
+      "minimum": 1,
+      "type": "integer"
+     },
+     "log_url": {
+      "type": "string"
+     },
+     "node_id": {
+      "type": "string"
+     },
+     "performed_via_github_app": {
+      "type": "null"
+     },
+     "repository_url": {
+      "pattern": "^https://api\\.github\\.com/",
+      "type": "string"
+     },
+     "state": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "target_url": {
+      "type": "string"
+     },
+     "updated_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+      "type": "string"
+     },
+     "url": {
+      "pattern": "^https://api\\.github\\.com/",
+      "type": "string"
+     }
+    },
+    "required": [
+     "created_at",
+     "creator",
+     "deployment_url",
+     "description",
+     "environment",
+     "environment_url",
+     "id",
+     "log_url",
+     "node_id",
+     "performed_via_github_app",
+     "repository_url",
+     "state",
+     "target_url",
+     "updated_at",
+     "url"
+    ],
+    "title": "status",
+    "type": "object"
+   },
+   "title": "gh api repos/{owner}/{repo}/deployments/{deployment_id}/statuses",
+   "type": "array"
+  },
+  "gh_deployments.schema.json": {
+   "$id": "shipgate.authority/gh.deployments.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "description": "CLOSED item shape. The deployment records for a commit in an environment: deploymentId, the deployed sha and the environment name - what binds a deployment to a decision's commit. Captured 2026-08-08 from gh v2.81.0.",
+   "items": {
+    "$id": "shipgate.authority/gh.deployments.v1.item",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "description": "one deployment record",
+    "properties": {
+     "created_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+      "type": "string"
+     },
+     "creator": {
+      "additionalProperties": true,
+      "properties": {
+       "id": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "login": {
+        "minLength": 1,
+        "type": "string"
+       }
+      },
+      "required": [
+       "login",
+       "id"
+      ],
+      "type": "object"
+     },
+     "description": {
+      "type": "null"
+     },
+     "environment": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "id": {
+      "minimum": 1,
+      "type": "integer"
+     },
+     "node_id": {
+      "type": "string"
+     },
+     "original_environment": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "payload": {
+      "type": "object"
+     },
+     "performed_via_github_app": {
+      "type": "object"
+     },
+     "production_environment": {
+      "type": "boolean"
+     },
+     "ref": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "repository_url": {
+      "pattern": "^https://api\\.github\\.com/",
+      "type": "string"
+     },
+     "sha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+     },
+     "statuses_url": {
+      "pattern": "^https://api\\.github\\.com/",
+      "type": "string"
+     },
+     "task": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "transient_environment": {
+      "type": "boolean"
+     },
+     "updated_at": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+      "type": "string"
+     },
+     "url": {
+      "pattern": "^https://api\\.github\\.com/",
+      "type": "string"
+     }
+    },
+    "required": [
+     "created_at",
+     "creator",
+     "description",
+     "environment",
+     "id",
+     "node_id",
+     "original_environment",
+     "payload",
+     "performed_via_github_app",
+     "production_environment",
+     "ref",
+     "repository_url",
+     "sha",
+     "statuses_url",
+     "task",
+     "transient_environment",
+     "updated_at",
+     "url"
+    ],
+    "title": "deployment",
+    "type": "object"
+   },
+   "title": "gh api 'repos/{owner}/{repo}/deployments?environment={env}&sha={sha}'",
+   "type": "array"
+  },
+  "gh_environment.schema.json": {
+   "$id": "shipgate.authority/gh.environment.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "CLOSED shape. An unrecognised property on an environment record may carry protection semantics this kit does not model, so it is a refusal, not a warning. The captured instance is the NEGATIVE fixture: protection_rules [], deployment_branch_policy null, can_admins_bypass true - i.e. NOT a trust boundary. Captured from gh v2.65.0.",
+   "properties": {
+    "can_admins_bypass": {
+     "type": "boolean"
+    },
+    "created_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "deployment_branch_policy": {
+     "additionalProperties": true,
+     "properties": {
+      "custom_branch_policies": {
+       "type": "boolean"
+      },
+      "protected_branches": {
+       "type": "boolean"
+      }
+     },
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "html_url": {
+     "pattern": "^https://",
+     "type": "string"
+    },
+    "id": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "node_id": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "protection_rules": {
+     "items": {
+      "additionalProperties": true,
+      "type": "object"
+     },
+     "type": "array"
+    },
+    "updated_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "url": {
+     "pattern": "^https://api\\.github\\.com/",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "node_id",
+    "name",
+    "url",
+    "html_url",
+    "created_at",
+    "updated_at",
+    "can_admins_bypass",
+    "protection_rules",
+    "deployment_branch_policy"
+   ],
+   "title": "gh api repos/{owner}/{repo}/environments/{env}",
+   "type": "object"
+  },
+  "gh_environment_list.schema.json": {
+   "$id": "shipgate.authority/gh.environment.list.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "Envelope around gh.environment.v1 records. Captured from gh v2.65.0.",
+   "properties": {
+    "environments": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "can_admins_bypass": {
+        "type": "boolean"
+       },
+       "created_at": {
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+        "type": "string"
+       },
+       "deployment_branch_policy": {
+        "additionalProperties": true,
+        "type": [
+         "object",
+         "null"
+        ]
+       },
+       "html_url": {
+        "pattern": "^https://",
+        "type": "string"
+       },
+       "id": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "name": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "node_id": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "protection_rules": {
+        "items": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "updated_at": {
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+        "type": "string"
+       },
+       "url": {
+        "pattern": "^https://api\\.github\\.com/",
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "node_id",
+       "name",
+       "url",
+       "html_url",
+       "created_at",
+       "updated_at",
+       "can_admins_bypass",
+       "protection_rules",
+       "deployment_branch_policy"
+      ],
+      "type": "object"
+     },
+     "maxItems": 200,
+     "type": "array"
+    },
+    "total_count": {
+     "minimum": 0,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "total_count",
+    "environments"
+   ],
+   "title": "gh api repos/{owner}/{repo}/environments",
+   "type": "object"
+  },
+  "gh_environment_protected.schema.json": {
+   "$id": "shipgate.authority/gh.environment.protected.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "The record shape when protection_rules is non-empty. This schema describes what such a record LOOKS LIKE; it deliberately does NOT encode whether the environment QUALIFIES as an independent principal. Qualification is policy, it lives in gh.is_qualifying_environment(), and conflating the two would mean an unqualifying-but-well-formed record got reported as a malformed one. The captured instance is exactly that case: it is a real protected environment (a required_reviewers rule with a real reviewer) that does NOT qualify, because prevent_self_review is false, deployment_branch_policy is null and can_admins_bypass is true. Captured 2026-08-05 from a throwaway public repository via gh api.",
+   "properties": {
+    "can_admins_bypass": {
+     "type": "boolean"
+    },
+    "created_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "deployment_branch_policy": {
+     "additionalProperties": false,
+     "properties": {
+      "custom_branch_policies": {
+       "type": "boolean"
+      },
+      "protected_branches": {
+       "type": "boolean"
+      }
+     },
+     "type": [
+      "object",
+      "null"
+     ]
+    },
+    "html_url": {
+     "pattern": "^https://",
+     "type": "string"
+    },
+    "id": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "node_id": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "protection_rules": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "id": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "node_id": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "prevent_self_review": {
+        "type": "boolean"
+       },
+       "reviewers": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "reviewer": {
+           "additionalProperties": true,
+           "properties": {
+            "id": {
+             "minimum": 1,
+             "type": "integer"
+            },
+            "login": {
+             "minLength": 1,
+             "type": "string"
+            },
+            "name": {
+             "type": "string"
+            },
+            "node_id": {
+             "minLength": 1,
+             "type": "string"
+            },
+            "site_admin": {
+             "type": "boolean"
+            },
+            "slug": {
+             "type": "string"
+            },
+            "type": {
+             "enum": [
+              "User",
+              "Organization",
+              "Bot"
+             ],
+             "type": "string"
+            }
+           },
+           "required": [
+            "id"
+           ],
+           "type": "object"
+          },
+          "type": {
+           "enum": [
+            "User",
+            "Team"
+           ],
+           "type": "string"
+          }
+         },
+         "required": [
+          "type",
+          "reviewer"
+         ],
+         "type": "object"
+        },
+        "maxItems": 64,
+        "type": "array"
+       },
+       "type": {
+        "enum": [
+         "required_reviewers",
+         "wait_timer",
+         "branch_policy"
+        ],
+        "type": "string"
+       },
+       "wait_timer": {
+        "minimum": 0,
+        "type": "integer"
+       }
+      },
+      "required": [
+       "id",
+       "node_id",
+       "type"
+      ],
+      "type": "object"
+     },
+     "maxItems": 32,
+     "minItems": 1,
+     "type": "array"
+    },
+    "updated_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "url": {
+     "pattern": "^https://api\\.github\\.com/",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "node_id",
+    "name",
+    "url",
+    "html_url",
+    "created_at",
+    "updated_at",
+    "can_admins_bypass",
+    "protection_rules",
+    "deployment_branch_policy"
+   ],
+   "title": "gh environment WITH protection rules (RECORD SHAPE ONLY)",
+   "type": "object"
+  },
+  "gh_environment_secrets.schema.json": {
+   "$id": "shipgate.authority/gh.environment.secrets.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "The EMPTY-LIST shape is the captured one: {\"total_count\":0,\"secrets\":[]}. Zero secrets must parse to zero, never to an error - an empty environment is a fact about the environment, not a malformed response. Captured from gh v2.65.0.",
+   "properties": {
+    "secrets": {
+     "items": {
+      "additionalProperties": true,
+      "properties": {
+       "created_at": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "name": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "updated_at": {
+        "minLength": 1,
+        "type": "string"
+       }
+      },
+      "required": [
+       "name",
+       "created_at",
+       "updated_at"
+      ],
+      "type": "object"
+     },
+     "maxItems": 200,
+     "type": "array"
+    },
+    "total_count": {
+     "minimum": 0,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "total_count",
+    "secrets"
+   ],
+   "title": "gh api repos/{owner}/{repo}/environments/{env}/secrets",
+   "type": "object"
+  },
+  "gh_repo.schema.json": {
+   "$id": "shipgate.authority/gh.repo.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": true,
+   "description": "The identity anchor: which repository, owned by which principal, is the subject. additionalProperties is TRUE here on purpose - GitHub adds repository fields over time and none of them participates in the trust decision, so a closed set would produce false refusals. The identity-bearing subset below is required and strictly typed. (Contrast gh.environment.v1, which IS closed, because an unrecognised field there could carry protection semantics we do not model.) Captured from gh v2.65.0 against a private repo.",
+   "properties": {
+    "archived": {
+     "type": "boolean"
+    },
+    "default_branch": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "disabled": {
+     "type": "boolean"
+    },
+    "fork": {
+     "type": "boolean"
+    },
+    "full_name": {
+     "pattern": "^[^/]+/[^/]+$",
+     "type": "string"
+    },
+    "html_url": {
+     "pattern": "^https://",
+     "type": "string"
+    },
+    "id": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "node_id": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "owner": {
+     "additionalProperties": true,
+     "properties": {
+      "id": {
+       "minimum": 1,
+       "type": "integer"
+      },
+      "login": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "node_id": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "site_admin": {
+       "type": "boolean"
+      },
+      "type": {
+       "enum": [
+        "User",
+        "Organization",
+        "Bot"
+       ],
+       "type": "string"
+      }
+     },
+     "required": [
+      "login",
+      "id",
+      "node_id",
+      "type"
+     ],
+     "type": "object"
+    },
+    "permissions": {
+     "additionalProperties": true,
+     "properties": {
+      "admin": {
+       "type": "boolean"
+      },
+      "maintain": {
+       "type": "boolean"
+      },
+      "pull": {
+       "type": "boolean"
+      },
+      "push": {
+       "type": "boolean"
+      },
+      "triage": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "admin",
+      "push",
+      "pull"
+     ],
+     "type": "object"
+    },
+    "private": {
+     "type": "boolean"
+    },
+    "visibility": {
+     "enum": [
+      "public",
+      "private",
+      "internal"
+     ],
+     "type": "string"
+    },
+    "web_commit_signoff_required": {
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "id",
+    "node_id",
+    "name",
+    "full_name",
+    "private",
+    "visibility",
+    "default_branch",
+    "html_url",
+    "owner",
+    "permissions"
+   ],
+   "title": "gh api repos/{owner}/{repo}",
+   "type": "object"
+  },
+  "gh_run.schema.json": {
+   "$id": "shipgate.authority/gh.run.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "CLOSED shape. The workflow-run record: which run, which commit, whose actor. `actor`/`triggering_actor` are builder-side principals - the identities an approval must NOT come from. Captured 2026-08-08 from gh v2.81.0 against a real gated deployment (production, second-account approval) and its self-approved counterpart.",
+   "properties": {
+    "actor": {
+     "additionalProperties": true,
+     "properties": {
+      "id": {
+       "minimum": 1,
+       "type": "integer"
+      },
+      "login": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "login",
+      "id"
+     ],
+     "type": "object"
+    },
+    "artifacts_url": {
+     "type": "string"
+    },
+    "cancel_url": {
+     "type": "string"
+    },
+    "check_suite_id": {
+     "type": "integer"
+    },
+    "check_suite_node_id": {
+     "type": "string"
+    },
+    "check_suite_url": {
+     "type": "string"
+    },
+    "conclusion": {
+     "type": [
+      "string",
+      "null"
+     ]
+    },
+    "created_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "display_title": {
+     "type": "string"
+    },
+    "event": {
+     "type": "string"
+    },
+    "head_branch": {
+     "type": "string"
+    },
+    "head_commit": {
+     "type": "object"
+    },
+    "head_repository": {
+     "additionalProperties": true,
+     "properties": {
+      "full_name": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "id": {
+       "minimum": 1,
+       "type": "integer"
+      }
+     },
+     "required": [
+      "id",
+      "full_name"
+     ],
+     "type": "object"
+    },
+    "head_sha": {
+     "pattern": "^[0-9a-f]{40}$",
+     "type": "string"
+    },
+    "html_url": {
+     "pattern": "^https://",
+     "type": "string"
+    },
+    "id": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "jobs_url": {
+     "type": "string"
+    },
+    "logs_url": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "node_id": {
+     "type": "string"
+    },
+    "path": {
+     "type": "string"
+    },
+    "previous_attempt_url": {
+     "type": "null"
+    },
+    "pull_requests": {
+     "type": "array"
+    },
+    "referenced_workflows": {
+     "type": "array"
+    },
+    "repository": {
+     "additionalProperties": true,
+     "properties": {
+      "full_name": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "id": {
+       "minimum": 1,
+       "type": "integer"
+      }
+     },
+     "required": [
+      "id",
+      "full_name"
+     ],
+     "type": "object"
+    },
+    "rerun_url": {
+     "type": "string"
+    },
+    "run_attempt": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "run_number": {
+     "type": "integer"
+    },
+    "run_started_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "status": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "triggering_actor": {
+     "additionalProperties": true,
+     "properties": {
+      "id": {
+       "minimum": 1,
+       "type": "integer"
+      },
+      "login": {
+       "minLength": 1,
+       "type": "string"
+      }
+     },
+     "required": [
+      "login",
+      "id"
+     ],
+     "type": "object"
+    },
+    "updated_at": {
+     "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T",
+     "type": "string"
+    },
+    "url": {
+     "pattern": "^https://api\\.github\\.com/",
+     "type": "string"
+    },
+    "workflow_id": {
+     "type": "integer"
+    },
+    "workflow_url": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "actor",
+    "artifacts_url",
+    "cancel_url",
+    "check_suite_id",
+    "check_suite_node_id",
+    "check_suite_url",
+    "conclusion",
+    "created_at",
+    "display_title",
+    "event",
+    "head_branch",
+    "head_commit",
+    "head_repository",
+    "head_sha",
+    "html_url",
+    "id",
+    "jobs_url",
+    "logs_url",
+    "name",
+    "node_id",
+    "path",
+    "previous_attempt_url",
+    "pull_requests",
+    "referenced_workflows",
+    "repository",
+    "rerun_url",
+    "run_attempt",
+    "run_number",
+    "run_started_at",
+    "status",
+    "triggering_actor",
+    "updated_at",
+    "url",
+    "workflow_id",
+    "workflow_url"
+   ],
+   "title": "gh api repos/{owner}/{repo}/actions/runs/{run_id}",
+   "type": "object"
+  },
+  "gh_run_approvals.schema.json": {
+   "$id": "shipgate.authority/gh.run.approvals.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "description": "CLOSED item shape. Who approved the gated deployment and in what state. The captured pair is the point: one approval by an account distinct from the run's actor, one by the actor itself. Captured 2026-08-08 from gh v2.81.0.",
+   "items": {
+    "$id": "shipgate.authority/gh.run.approvals.v1.item",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "description": "one approval record",
+    "properties": {
+     "comment": {
+      "type": "string"
+     },
+     "environments": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "state": {
+      "minLength": 1,
+      "type": "string"
+     },
+     "user": {
+      "additionalProperties": true,
+      "properties": {
+       "id": {
+        "minimum": 1,
+        "type": "integer"
+       },
+       "login": {
+        "minLength": 1,
+        "type": "string"
+       }
+      },
+      "required": [
+       "login",
+       "id"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "comment",
+     "environments",
+     "state",
+     "user"
+    ],
+    "title": "approval",
+    "type": "object"
+   },
+   "title": "gh api repos/{owner}/{repo}/actions/runs/{run_id}/approvals",
+   "type": "array"
+  },
+  "oidc_github_claims.schema.json": {
+   "$id": "shipgate.authority/oidc.github.claims.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": true,
+   "description": "DECLARED, NOT VALIDATED. Obtaining one requires ACTIONS_ID_TOKEN_REQUEST_TOKEN inside a real GitHub Actions job, which the capture environment did not have, so NO real capture exists and this shape is BLOCKED. Two independent refusals apply: (1) the shape is unvalidated -> AUT_OUTPUT_SHAPE_UNKNOWN; (2) this kit cannot verify the JWT signature (that needs the GitHub JWKS plus asymmetric crypto, both out of the bounded scope), so an unverified claim set is CONTEXT, never identity -> AUT_IDENTITY_NOT_ESTABLISHED. Identity is expected to arrive instead through a Fulcio-backed KEYLESS cosign verification, which is itself BLOCKED.",
+   "properties": {
+    "actor": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "actor_id": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "aud": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "environment": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "event_name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "exp": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "iat": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "iss": {
+     "const": "https://token.actions.githubusercontent.com",
+     "type": "string"
+    },
+    "job_workflow_ref": {
+     "pattern": "^[^/]+/[^/]+/",
+     "type": "string"
+    },
+    "job_workflow_sha": {
+     "pattern": "^[0-9a-f]{40}$",
+     "type": "string"
+    },
+    "jti": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "nbf": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "ref": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "ref_protected": {
+     "enum": [
+      "true",
+      "false"
+     ],
+     "type": "string"
+    },
+    "ref_type": {
+     "enum": [
+      "branch",
+      "tag"
+     ],
+     "type": "string"
+    },
+    "repository": {
+     "pattern": "^[^/]+/[^/]+$",
+     "type": "string"
+    },
+    "repository_id": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "repository_owner": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "repository_owner_id": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "repository_visibility": {
+     "enum": [
+      "public",
+      "private",
+      "internal"
+     ],
+     "type": "string"
+    },
+    "run_attempt": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "run_id": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "run_number": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "runner_environment": {
+     "enum": [
+      "github-hosted",
+      "self-hosted"
+     ],
+     "type": "string"
+    },
+    "sha": {
+     "pattern": "^[0-9a-f]{40}$",
+     "type": "string"
+    },
+    "sub": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "workflow_ref": {
+     "pattern": "^[^/]+/[^/]+/",
+     "type": "string"
+    },
+    "workflow_sha": {
+     "pattern": "^[0-9a-f]{40}$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "iss",
+    "aud",
+    "sub",
+    "exp",
+    "iat",
+    "repository",
+    "repository_id",
+    "repository_owner_id",
+    "job_workflow_ref",
+    "workflow_ref",
+    "sha",
+    "ref",
+    "run_id",
+    "runner_environment"
+   ],
+   "title": "GitHub Actions OIDC JWT claim set  [BLOCKED - NOT CAPTURED]",
+   "type": "object"
+  },
+  "rekor_cli_get.schema.json": {
+   "$id": "shipgate.authority/rekor.cli.get.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "PascalCase CLI shape. NOTE: it carries NO Verification / InclusionProof block by default, so it can establish an entry's existence and IntegratedTime but NEVER an inclusion proof. Captured from rekor-cli v1.5.3.",
+   "properties": {
+    "Attestation": {
+     "type": "string"
+    },
+    "AttestationType": {
+     "type": "string"
+    },
+    "Body": {
+     "additionalProperties": true,
+     "minProperties": 1,
+     "type": "object"
+    },
+    "IntegratedTime": {
+     "minimum": 1,
+     "type": "integer"
+    },
+    "LogID": {
+     "pattern": "^[0-9a-f]{64}$",
+     "type": "string"
+    },
+    "LogIndex": {
+     "minimum": 0,
+     "type": "integer"
+    },
+    "UUID": {
+     "pattern": "^[0-9a-f]{64}([0-9a-f]{16})?$",
+     "type": "string"
+    },
+    "Verification": {
+     "additionalProperties": true,
+     "type": "object"
+    }
+   },
+   "required": [
+    "Body",
+    "LogIndex",
+    "IntegratedTime",
+    "UUID",
+    "LogID"
+   ],
+   "title": "rekor-cli get --log-index N --format json",
+   "type": "object"
+  },
+  "rekor_cli_loginfo.schema.json": {
+   "$id": "shipgate.authority/rekor.cli.loginfo.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "Signed tree head summary. Used only to cross-check that a checkpoint's origin tree id belongs to the log we think we are talking to. Captured from rekor-cli v1.5.3.",
+   "properties": {
+    "ActiveTreeSize": {
+     "minimum": 0,
+     "type": "integer"
+    },
+    "RootHash": {
+     "pattern": "^[0-9a-f]{64}$",
+     "type": "string"
+    },
+    "SignedTreeHead": {
+     "type": "string"
+    },
+    "TotalTreeSize": {
+     "minimum": 0,
+     "type": "integer"
+    },
+    "TreeID": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    }
+   },
+   "required": [
+    "ActiveTreeSize",
+    "TotalTreeSize",
+    "RootHash",
+    "TreeID"
+   ],
+   "title": "rekor-cli loginfo --format json",
+   "type": "object"
+  },
+  "rekor_rest_entry.schema.json": {
+   "$id": "shipgate.authority/rekor.rest.entry.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "A single-entry map keyed by the 80-hex entry UUID (8-byte tree-id prefix + 32-byte leaf hash). This is the FRESHNESS- and PROOF-critical shape: verification.inclusionProof and verification.signedEntryTimestamp are present here and absent from the rekor-cli default output.",
+   "minProperties": 1,
+   "patternProperties": {
+    "^[0-9a-f]{80}$": {
+     "additionalProperties": false,
+     "properties": {
+      "attestation": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "body": {
+       "minLength": 1,
+       "type": "string"
+      },
+      "integratedTime": {
+       "minimum": 1,
+       "type": "integer"
+      },
+      "logID": {
+       "pattern": "^[0-9a-f]{64}$",
+       "type": "string"
+      },
+      "logIndex": {
+       "minimum": 0,
+       "type": "integer"
+      },
+      "verification": {
+       "additionalProperties": false,
+       "properties": {
+        "inclusionProof": {
+         "additionalProperties": false,
+         "properties": {
+          "checkpoint": {
+           "minLength": 1,
+           "type": "string"
+          },
+          "hashes": {
+           "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+           },
+           "maxItems": 64,
+           "minItems": 0,
+           "type": "array"
+          },
+          "logIndex": {
+           "minimum": 0,
+           "type": "integer"
+          },
+          "rootHash": {
+           "pattern": "^[0-9a-f]{64}$",
+           "type": "string"
+          },
+          "treeSize": {
+           "minimum": 1,
+           "type": "integer"
+          }
+         },
+         "required": [
+          "checkpoint",
+          "hashes",
+          "logIndex",
+          "rootHash",
+          "treeSize"
+         ],
+         "type": "object"
+        },
+        "signedEntryTimestamp": {
+         "minLength": 1,
+         "type": "string"
+        }
+       },
+       "required": [
+        "inclusionProof",
+        "signedEntryTimestamp"
+       ],
+       "type": "object"
+      }
+     },
+     "required": [
+      "body",
+      "integratedTime",
+      "logID",
+      "logIndex",
+      "verification"
+     ],
+     "type": "object"
+    }
+   },
+   "title": "Rekor REST GET /api/v1/log/entries?logIndex=N",
+   "type": "object"
+  },
+  "rekor_rest_loginfo.schema.json": {
+   "$id": "shipgate.authority/rekor.rest.loginfo.v1",
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "additionalProperties": false,
+   "description": "The current signed tree head of the ACTIVE shard, plus the sealed inactive shards. This shape exists for exactly one job: the entry-level logIndex in a REST entry is GLOBAL across every shard the log has ever had, while inclusionProof.logIndex is LOCAL to the active shard's Merkle tree. The difference between them must equal the sum of the inactive shards' tree sizes. Without this document that arithmetic cannot be checked, and the two indices simply look like they disagree. Captured 2026-08-06 alongside rekor_rest_entry_fresh.json.",
+   "properties": {
+    "inactiveShards": {
+     "items": {
+      "additionalProperties": false,
+      "properties": {
+       "rootHash": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+       },
+       "signedTreeHead": {
+        "minLength": 1,
+        "type": "string"
+       },
+       "treeID": {
+        "pattern": "^[0-9]+$",
+        "type": "string"
+       },
+       "treeSize": {
+        "minimum": 1,
+        "type": "integer"
+       }
+      },
+      "required": [
+       "rootHash",
+       "signedTreeHead",
+       "treeID",
+       "treeSize"
+      ],
+      "type": "object"
+     },
+     "maxItems": 64,
+     "minItems": 0,
+     "type": "array"
+    },
+    "rootHash": {
+     "pattern": "^[0-9a-f]{64}$",
+     "type": "string"
+    },
+    "signedTreeHead": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "treeID": {
+     "pattern": "^[0-9]+$",
+     "type": "string"
+    },
+    "treeSize": {
+     "minimum": 1,
+     "type": "integer"
+    }
+   },
+   "required": [
+    "rootHash",
+    "signedTreeHead",
+    "treeID",
+    "treeSize"
+   ],
+   "title": "Rekor REST GET /api/v1/log",
+   "type": "object"
+  }
+ }
+}
