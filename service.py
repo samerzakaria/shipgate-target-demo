@@ -11,7 +11,8 @@ app = Routes()
 
 
 def add(a, b):
-    if a == 0:
+    zero = a == 0
+    if zero:
         return b
     return a + b
 
